@@ -1,0 +1,11 @@
+{
+  "name": "ubiq-genie-components",
+  "version": "1.0.0",
+  "description": "Core components of Ubiq-Genie",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "UCL VECG",
+  "license": "Apache-2.0"
+}

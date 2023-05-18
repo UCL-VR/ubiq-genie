@@ -1,0 +1,21 @@
+{
+    "roomserver":
+    {
+        "tcp":
+        {
+            "port": 8009
+        },
+        "wss":
+        {
+            "port": 8010,
+            "cert": "./cert.pem",
+            "key": "./key.pem"
+        }
+    },
+    "iceservers":
+    [
+        {
+            "uri" : "stun:stun.l.google.com:19302"
+        }
+    ]
+}
