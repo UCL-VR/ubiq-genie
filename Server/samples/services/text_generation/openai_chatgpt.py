@@ -26,7 +26,7 @@ def listen_for_messages(args):
             message_log.append(
                 {"role": "user", "content": line.decode("utf-8").strip()}
             )
-            request_response(message_log)
+            message_log = request_response(message_log)
             print(">" + message_log[-1]["content"])
         except KeyboardInterrupt:
             break
