@@ -22,9 +22,9 @@ These instructions will get you a copy of the project up and running to run the 
 
 5. From the `Server` folder, install the Python dependencies by running `pip install -r samples/requirements.txt` or `conda install --file samples/requirements.txt`, depending on your virtual environment.
 
-4. In Unity, open the `Unity` folder. To add Ubiq to the `Unity Hub`, open the `Unity Hub`, click `Add`, then navigate to `/Ubiq/Unity` and click `Select Folder`.
+6. In Unity, open the `Unity` folder. To add Ubiq to the `Unity Hub`, open the `Unity Hub`, click `Add`, then navigate to `/Ubiq/Unity` and click `Select Folder`.
 
-5. Read the README file in the corresponding folder in the `Server/samples/apps` folder for further setup instructions. For a list of available samples, see the [Samples](#samples) section below.
+7. Read the README file in the corresponding folder in the `Server/samples/apps` folder for further setup instructions. For a list of available samples, see the [Samples](#samples) section below.
 
 ## Documentation
 

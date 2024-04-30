@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.ucl.ubiq": {
-      "version": "https://github.com/UCL-VR/ubiq.git#upm",
+      "version": "https://github.com/UCL-VR/ubiq.git#v0.4.2-upm",
       "depth": 0,
       "source": "git",
       "dependencies": {
