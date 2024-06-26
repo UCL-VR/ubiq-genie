@@ -1,0 +1,33 @@
+{
+    "name": "BaseApp",
+    "roomGuid": "6765c52b-3ad6-4fb0-9030-2c9a05dc4731",
+    "credentials": {},
+    "roomserver":
+    {
+        "joinExisting": true,
+        "uri": "localhost",
+        "tcp":
+        {
+            "port": 8009
+        },
+        "wss":
+        {
+            "port": 8010,
+            "cert": "./cert.pem",
+            "key": "./key.pem"
+        }
+    },
+    "status":
+    {
+        "port": 8011,
+        "cert": "./cert.pem",
+        "key": "./key.pem",
+        "apikeys": []
+    },
+    "iceservers":
+    [
+        {
+            "uri" : "stun:stun.l.google.com:19302"
+        }
+    ]
+}

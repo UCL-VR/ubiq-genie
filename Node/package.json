@@ -1,0 +1,29 @@
+{
+  "name": "ubiq-genie",
+  "version": "0.1.0",
+  "description": "Ubiq-Genie",
+  "scripts": {
+    "genie-create": "node create-template.js",
+    "start": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' cli.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "cd node_modules/ubiq && npm install"
+  },
+  "type": "module",
+  "author": "UCL VECG",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@roamhq/wrtc": "^0.8.0",
+    "@types/webrtc": "^0.0.43",
+    "ubiq-server": "https://gitpkg.now.sh/UCL-VR/ubiq/Node?unity-v1.0.0-pre.7",
+    "uuid": "^9.0.1",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@types/nconf": "^0.10.6",
+    "@types/node": "^20.14.5",
+    "@types/ws": "^8.5.10",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.4.5"
+  }
+}
