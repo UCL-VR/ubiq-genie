@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 class SpeechToTextService extends ServiceController {
-    constructor(scene: NetworkScene, name='SpeechToTextService'){
+    constructor(scene: NetworkScene, name = 'SpeechToTextService') {
         super(scene, name);
 
         this.registerRoomClientEvents();
@@ -19,16 +19,16 @@ class SpeechToTextService extends ServiceController {
         }
 
         this.roomClient.addListener('OnPeerAdded', (peer: { uuid: string }) => {
-            console.log("Starting speech-to-text process for peer " + peer.uuid);
+            this.log('Starting speech-to-text process for peer ' + peer.uuid);
 
             this.registerChildProcess(peer.uuid, 'python', [
                 '-u',
-                path.join(path.dirname(fileURLToPath(import.meta.url)), 'transcribe_azure.py')
+                path.join(path.dirname(fileURLToPath(import.meta.url)), 'transcribe_azure.py'),
             ]);
         });
 
         this.roomClient.addListener('OnPeerRemoved', (peer: { uuid: string }) => {
-            console.log('Ending speech-to-text process for peer ' + peer.uuid);
+            this.log('Ending speech-to-text process for peer ' + peer.uuid);
             this.killChildProcess(peer.uuid);
         });
     }

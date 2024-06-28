@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { NetworkId } from 'ubiq';
 
-class MessageReader extends EventEmitter {
+export class MessageReader extends EventEmitter {
     networkId: NetworkId;
     context: any;
 
@@ -21,5 +21,3 @@ class MessageReader extends EventEmitter {
         this.emit('data', msg);
     }
 }
-
-export { MessageReader };

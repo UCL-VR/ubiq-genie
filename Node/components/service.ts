@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { spawn, ChildProcess } from 'child_process';
 import { NetworkScene } from 'ubiq';
+import { Logger } from './logger';
 
 class ServiceController extends EventEmitter {
     name: string;
@@ -19,8 +20,19 @@ class ServiceController extends EventEmitter {
     constructor(scene: NetworkScene, name: string) {
         super();
         this.name = name;
-        this.roomClient = scene.getComponent("RoomClient");
+        this.roomClient = scene.getComponent('RoomClient');
         this.childProcesses = {};
+
+        // Listen for process exit events and ensure child processes are killed
+        process.on('exit', () => this.killAllChildProcesses());
+        process.on('SIGINT', () => {
+            this.killAllChildProcesses();
+            process.exit();
+        });
+        process.on('SIGTERM', () => {
+            this.killAllChildProcesses();
+            process.exit();
+        });
     }
 
     /**
@@ -51,13 +63,13 @@ class ServiceController extends EventEmitter {
         // Register events for the child process.
         const childProcess = this.childProcesses[identifier];
         if (childProcess && childProcess.stdout && childProcess.stderr) {
-            childProcess.stdout.on("data", (data) => this.emit("data", data, identifier));
-            childProcess.stderr.on("data", (data) => {
+            childProcess.stdout.on('data', (data) => this.emit('data', data, identifier));
+            childProcess.stderr.on('data', (data) => {
                 console.error(`\x1b[31mService ${this.name} error, from child process ${identifier}:${data}\x1b[0m`);
             });
-            childProcess.on("close", (code, signal) => {
+            childProcess.on('close', (code, signal) => {
                 delete this.childProcesses[identifier];
-                this.emit("close", code, signal, identifier);
+                this.emit('close', code, signal, identifier);
             });
         }
 
@@ -66,7 +78,7 @@ class ServiceController extends EventEmitter {
         // Check if the child process has already been closed.
         if (this.childProcesses[identifier].killed) {
             delete this.childProcesses[identifier];
-            this.emit("close", 0, "SIGTERM", identifier);
+            this.emit('close', 0, 'SIGTERM', identifier);
         }
 
         // Return reference to the child process.
@@ -75,12 +87,12 @@ class ServiceController extends EventEmitter {
 
     /**
      * Logs a message to the console with the service name.
-     * 
-     * @memberof Service
+     *
+     * @memberof ApplicationController
      * @param {string} message - The message to log.
      */
-    log(message: string) {
-        console.log(`\x1b[35mService ${this.name}: \x1b[0m ${message}`);
+    log(message: string, level: 'info' | 'warning' | 'error' = 'info', end: string = '\n'): void {
+        Logger.log(this.name, message, level, end, '\x1b[35m');
     }
 
     /**
@@ -97,7 +109,7 @@ class ServiceController extends EventEmitter {
         if (this.childProcesses[identifier] === undefined) {
             throw new Error(`\x1b[31mService ${this.name} error\x1b[0m: Child process with identifier: ${identifier}`);
         }
-        
+
         this.childProcesses[identifier].stdin!.write(data);
     }
 
@@ -124,6 +136,7 @@ class ServiceController extends EventEmitter {
      * @instance
      */
     killAllChildProcesses() {
+        this.log('Killing all child processes');
         for (const childProcess of Object.values(this.childProcesses)) {
             childProcess.kill();
         }

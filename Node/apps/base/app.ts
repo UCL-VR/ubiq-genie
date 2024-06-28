@@ -1,4 +1,3 @@
-import { UbiqTcpConnection } from 'ubiq-server/ubiq';
 import { ApplicationController } from '../../components/application';
 import { BaseService } from '../../services/base/service';
 import path from 'path';
@@ -16,7 +15,7 @@ class BaseApplication extends ApplicationController {
 
         // STEP 2: Define the application pipeline
         this.definePipeline();
-        this.log("Pipeline defined");
+        this.log('Pipeline defined');
 
         // STEP 3: Join a room based on the configuration (optionally creates a server)
         this.joinRoom();
@@ -40,7 +39,7 @@ class BaseApplication extends ApplicationController {
             this.log(`Child process sent message: ${data}`);
 
             this.scene.send(new NetworkId(99), {
-                data: data.toString()
+                data: data.toString(),
             });
         });
     }

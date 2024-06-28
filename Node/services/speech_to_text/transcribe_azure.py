@@ -4,30 +4,22 @@ import json
 import azure.cognitiveservices.speech as speechsdk
 from azure.cognitiveservices.speech.audio import AudioStreamFormat, AudioConfig
 import argparse
+from dotenv import load_dotenv
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--peer", type=str, default="00000000-0000-0000-0000-000000000000")
-# parser.add_argument("--key", type=str, required=False) # Required API key parameter for Azure Speech
-# parser.add_argument("--region", type=str, required=False) # Required region parameter for Azure Speech
-args = parser.parse_args()
-
-def recognize_from_stdin():
+def recognize_from_stdin(peer):
     speech_config = speechsdk.SpeechConfig(
         subscription=os.environ.get("SPEECH_KEY"),
         region=os.environ.get("SPEECH_REGION"),
     )
     speech_config.speech_recognition_language = "en-US"
-    audioFormat = AudioStreamFormat(48000, 16, 1)
-    custom_push_stream = speechsdk.audio.PushAudioInputStream(stream_format=audioFormat)
+    audio_format = AudioStreamFormat(48000, 16, 1)
+    custom_push_stream = speechsdk.audio.PushAudioInputStream(stream_format=audio_format)
     audio_config = AudioConfig(stream=custom_push_stream)
 
     speech_recognizer = speechsdk.SpeechRecognizer(
         speech_config=speech_config, audio_config=audio_config
     )
     done = False
-
-    # def recognizing_cb(evt: speechsdk.SpeechRecognitionEventArgs):
-    #     print("RECOGNIZING: {}".format(evt))
 
     def recognized_cb(evt: speechsdk.SpeechRecognitionEventArgs):
         print(">{}".format(evt.result.text))
@@ -38,24 +30,15 @@ def recognize_from_stdin():
         nonlocal done
         done = True
 
-    # Connect callbacks to the events fired by the speech recognizer
-    # speech_recognizer.recognizing.connect(recognizing_cb)
     speech_recognizer.recognized.connect(recognized_cb)
     speech_recognizer.session_stopped.connect(stop_cb)
     speech_recognizer.canceled.connect(stop_cb)
 
-    # Perform recognition. `start_continuous_recognition_async asynchronously initiates continuous recognition operation,
-    # Other tasks can be performed on this thread while recognition starts...
-    # wait on result_future.get() to know when initialization is done.
-    # Call stop_continuous_recognition_async() to stop recognition.
     result_future = speech_recognizer.start_continuous_recognition_async()
+    result_future.get()
 
-    result_future.get()  # wait for voidfuture, so we know engine initialization is done.
-
-    # Write stdin to the stream
     while not done:
         try:
-            # line = sys.stdin.buffer.readline()
             data = sys.stdin.buffer.read(4096)
             if len(data) == 0:
                 break
@@ -63,6 +46,18 @@ def recognize_from_stdin():
         except KeyboardInterrupt:
             break
 
+def main():
+    if not os.path.exists(".env"):
+        print("Please create a .env file with SPEECH_KEY and SPEECH_REGION in the application root directory.")
+        sys.exit(1)
+    load_dotenv(".env") # Load environment variables from .env file
 
-recognize_from_stdin()
-print("Azure Speech client stopped receiving chunks.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--peer", type=str, default="00000000-0000-0000-0000-000000000000")
+    args = parser.parse_args()
+
+    recognize_from_stdin(args.peer)
+    print("Azure Speech client stopped receiving chunks.")
+
+if __name__ == "__main__":
+    main()

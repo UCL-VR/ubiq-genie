@@ -28,12 +28,12 @@
             "node_modules/@roamhq/wrtc/types"
         ]
     },
-    "include": ["**/*.ts"],
+    "include": ["**/*.ts", "eslint.config.js"],
     "ts-node": {
         "esm": true,
         "experimentalSpecifierResolution": "node",
         "transpileOnly": true,
         "skipIgnore": true
     },
-    "exclude": ["dist", "node_modules"]
+    "exclude": ["dist", "node_modules", "bin"]
 }

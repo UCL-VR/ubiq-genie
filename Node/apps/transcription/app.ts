@@ -9,13 +9,12 @@ import { AudioReceiver } from '../../components/audio_receiver';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
 import { AudioRecorder } from '../../services/audio_recorder/service';
 
-
 class Transcription extends ApplicationController {
     components: {
         audioRecorder?: AudioRecorder;
-        audioReceiver?: AudioReceiver,
-        speech2text?: SpeechToTextService,
-        writer?: fs.WriteStream
+        audioReceiver?: AudioReceiver;
+        speech2text?: SpeechToTextService;
+        writer?: fs.WriteStream;
     } = {};
 
     constructor(configFile: string = 'config.json') {
@@ -29,25 +28,32 @@ class Transcription extends ApplicationController {
 
         // STEP 2: Define the application pipeline
         this.definePipeline();
-        this.log("Pipeline defined");
+        this.log('Pipeline defined');
 
         // STEP 3: Join a room based on the configuration (optionally creates a server)
         this.joinRoom();
     }
 
     registerComponents(): void {
-        // A MessageReader to read audio data from peers based on fixed network ID
+        // An AudioReceiver to receive audio data from peers
         this.components.audioReceiver = new AudioReceiver(this.scene);
 
         // A SpeechToTextService to transcribe audio coming from peers
         this.components.speech2text = new SpeechToTextService(this.scene);
+
+        // An AudioRecorder to record audio data from peers
         this.components.audioRecorder = new AudioRecorder(this.scene);
 
         // File path based on peer UUID and timestamp
         const timestamp = new Date().toISOString().replace(/:/g, '-');
 
+        // Create ./recordings directory if it does not exist
+        if (!fs.existsSync('./recordings')) {
+            fs.mkdirSync('./recordings');
+        }
+
         // Define file writer to write transcription output to a file
-        this.components.writer = fs.createWriteStream('transcription_timestamp_' + timestamp + '.csv');
+        this.components.writer = fs.createWriteStream('./recordings/transcription_timestamp_' + timestamp + '.csv');
 
         // Write header to the file
         this.components.writer.write('Timestamp,Peer,Transcription\n');
@@ -67,20 +73,20 @@ class Transcription extends ApplicationController {
         // Step 2: When we receive a response from the transcription service, write it to a file. Also, send it to the client.
         this.components.speech2text?.on('data', (data: Buffer, identifier: string) => {
             // If data starts with "> ", it is a transcription result. Otherwise, it is a status message.
-            if (data.toString().startsWith('>')) {
+            if (data.toString().startsWith('>') && data.toString().length > 3) {
                 // Strip off > and ensure there is only a single newline at the end
                 const transcription = Buffer.from(data.toString().substring(1).replace(/\n+$/, '\n'));
 
                 // Write the transcription to a file
                 const timestamp = new Date().toISOString().replace(/:/g, '-');
                 this.components.writer?.write(timestamp + ',' + identifier + ',' + transcription);
-                this.log('[' + timestamp + '] ' + identifier + ': ' + transcription, '');
+                this.log('[' + timestamp + '] ' + identifier + ': ' + transcription, 'info', '');
 
                 // Send the transcription result to the client based on a predefined networkId
                 this.scene.send(new NetworkId(99), {
-                    type: 'Transcription',
+                    timestamp: timestamp,
                     peer: identifier,
-                    data: transcription,
+                    data: transcription.toString(),
                 });
             } else {
                 this.log('Child process ' + identifier + ' sent status message: ' + data.toString());

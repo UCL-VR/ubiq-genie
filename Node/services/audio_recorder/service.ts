@@ -7,7 +7,11 @@ import { fileURLToPath } from 'url';
 
 class AudioRecorder extends ServiceController {
     file_path_prefix: string;
-    constructor(scene: NetworkScene, name='AudioRecorder', file_path_prefix:string = './recordings/recorded_audio_'){
+    constructor(
+        scene: NetworkScene,
+        name = 'AudioRecorder',
+        file_path_prefix: string = './recordings/recorded_audio_'
+    ) {
         super(scene, name);
         this.file_path_prefix = file_path_prefix;
 
@@ -25,21 +29,21 @@ class AudioRecorder extends ServiceController {
         }
 
         this.roomClient.addListener('OnPeerAdded', (peer: { uuid: string }) => {
-            console.log("Starting recording process for peer " + peer.uuid);
+            this.log('Starting recording process for peer ' + peer.uuid);
             // File path based on peer UUID and timestamp
             const timestamp = new Date().toISOString().replace(/:/g, '-');
             const file_path = this.file_path_prefix + peer.uuid + '_' + timestamp + '.wav';
-            
+
             this.registerChildProcess(peer.uuid, 'python', [
                 '-u',
                 path.join(path.dirname(fileURLToPath(import.meta.url)), 'record.py'),
                 '--file_path',
-                file_path
+                file_path,
             ]);
         });
 
         this.roomClient.addListener('OnPeerRemoved', (peer: { uuid: string }) => {
-            console.log('Ending recording process for peer ' + peer.uuid);
+            this.log('Ending recording process for peer ' + peer.uuid);
             this.killChildProcess(peer.uuid);
         });
     }
