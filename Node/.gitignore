@@ -110,24 +110,9 @@ dist
 # TernJS port file
 .tern-port
 
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
 # yarn v2
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-
-# VSCode folder
-.vscode/
-
-# Server local config file, not for source control
-config/local.json
-
-# macOS #
-.DS_Store
-.AppleDouble
-.LSOverride
-*.icloud
