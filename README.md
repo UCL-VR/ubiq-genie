@@ -5,7 +5,7 @@
 Ubiq-Genie is a framework that enables you to build server-assisted collaborative mixed reality applications with Unity using the [Ubiq](https://ubiq.online) framework. This is particularly useful for building multi-user applications that require server-side processing such as generative models, conversational agents, and real-time transcription. For more information, please refer to the [Ubiq-Genie paper](https://ubiq.online/publication/ubiq-genie/).
 
 > [!NOTE]
-> Before starting with Ubiq-Genie, we recommend that you familiarize yourself with the Ubiq framework. For more information, see the [Ubiq documentation](https://ucl-vr.github.io/ubiq/) and [Ubiq's website](https://ubiq.online).
+> Before starting with Ubiq-Genie, we recommend that you familiarize yourself with the Ubiq framework. For more information, see Ubiq's [ documentation](https://ucl-vr.github.io/ubiq/) and [website](https://ubiq.online). Ubiq-Genie currently uses Ubiq [v1.0.0-pre7](https://github.com/UCL-VR/ubiq/releases/tag/unity-v1.0.0-pre.7).
 
 ## Initial Setup
 
@@ -19,7 +19,7 @@ These instructions will get you a copy of the project up and running to run the 
 
 2. Open a terminal in the `Node` folder and run `npm install` to install the dependencies.
 
-3. Create a virtual environment using `conda`, using the environment file at `Node/services/environment.yml` file. For example, run `conda env create -f Node/services/environment.yml` to create the environment, then `conda activate ubiq-genie` to activate it. Please ensure that you have the correct PyTorch and CUDA versions installed (see the [PyTorch website](https://pytorch.org/get-started/locally/) for more information).
+3. Install the Python dependencies by navigating to the `Node/services` folder and running `pip install -r requirements.txt`. If you are using a virtual environment, activate it before running the command. Please ensure that you have the correct PyTorch and CUDA versions installed (see the [PyTorch website](https://pytorch.org/get-started/locally/) for more information).
 
 ### Client (Unity)
 
@@ -36,14 +36,14 @@ These instructions will get you a copy of the project up and running to run the 
 
 ## Documentation
 
-For more information on how to use Ubiq-Genie, please refer to the README file in the `Server` folder.
+For more information on how to use Ubiq-Genie, please refer to the README files in the `Node` folder.
 
 ## Samples
 
 The `Node/apps` folder contains a number of samples that demonstrate how to use Ubiq-Genie. For more information on how to use these samples, please refer to the README files in the corresponding folders. Currently, the following collaborative samples are available:
 
 - [**Texture Generation**](Node/apps/texture_generation/README.md): generates a texture based on voice-based input and an optional ray to select target objects
-- [**Multi-user Conversational Agent**](Node/apps/virtual_assistant/README.md): a conversational agent that can be interacted with by multiple users
+- [**Multi-user Conversational Agent**](Node/apps/conversational_agent/README.md): a conversational agent that can be interacted with by multiple users
 - [**Transcription**](Node/apps/transcription/README.md): transcribes audio streams of users in a room
 
 For a demo video of the samples, please refer to the [Ubiq-Genie demo video](https://youtu.be/cGz0z9BIgQk).
