@@ -7,7 +7,7 @@ This guide provides instructions on using the Ubiq-Genie framework to create an 
 An Azure Speech Services subscription is needed for this sample. You can create a free subscription [here](https://azure.microsoft.com/en-us/try/cognitive-services/?api=speech-services).
 
 > [!IMPORTANT]
-> Before proceeding, ensure the Ubiq-Genie framework and the necessary dependencies for this sample are correctly installed. For further details, please see the root [README](../../README.md) file.
+> Before proceeding, ensure the Ubiq-Genie framework and the necessary dependencies for this sample are correctly installed. For further details, please see the root [README](../../../README.md) file.
 
 ## Running the Sample
 
@@ -15,21 +15,13 @@ Follow these steps to run the sample:
 
 ### Server (Node.js)
 
-1. Open a terminal and navigate to the `Node/apps/conversational_agent` directory. Ensure the Python virtual environment in the `samples` directory is activated (e.g., `source venv/bin/activate`).
-2. Confirm that `Node/apps/conversational_agent/config.json` contains the correct configuration. Specifically, ensure that `roomserver:uri` points to the correct room server URI, `roomserver:tcp:port` is set to the correct port, and `roomserver:joinExisting` is set to `true` if you want to join an existing server, and `false` if you want to start a new server on `localhost`.
-3. Create an .env file and define the `SPEECH_KEY` and `SPEECH_REGION` variables in `Node/apps/conversational_agent/.env` to match your Azure Speech Services subscription key and region. Also add the `OPENAI_API_KEY` variable with your OpenAI API key. For example:
-
-    ```bash
-    SPEECH_KEY=YOUR_SPEECH_KEY
-    SPEECH_REGION=YOUR_SPEECH_REGION
-    OPENAI_API_KEY=YOUR_OPENAI_API_KEY
-    ```
-
-4. Execute the following command:
+1. Open a terminal and navigate to the `Node/apps/conversational_agent` directory. Ensure that your conda or venv environment is activated.
+2. Execute the below command, which will guide you through the configuration process, including setting up the server information and the required environment variables. Configuration will only be run the first time you start the application. Ensure that you apply the same server configuration to the Unity client (in `/Unity/Assets/ServerConfig.asset`).
 
     ```bash
     npm start conversational_agent
     ```
+If you need to reconfigure the application, you can run `npm start conversational_agent configure`. You may also manually configure the application by changing the `config.json` and `.env` files. The `config.json` file contains the server configuration, while the `.env` file contains the environment variables for the Azure Speech Services subscription key and region (`SPEECH_KEY` and `SPEECH_REGION`) and the OpenAI API key (`OPENAI_API_KEY`).
 
 ### Client (Unity)
 

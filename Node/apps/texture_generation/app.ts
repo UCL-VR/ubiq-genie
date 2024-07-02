@@ -7,6 +7,7 @@ import { FileServer } from '../../components/file_server';
 import path from 'path';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
 import { AudioReceiver } from '../../components/audio_receiver';
+import { fileURLToPath } from 'url';
 
 class TextureGeneration extends ApplicationController {
     lastPeerSelection: {
@@ -187,9 +188,9 @@ class TextureGeneration extends ApplicationController {
     }
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
     const configPath = './config.json';
-    const __dirname = path.dirname(new URL(import.meta.url).pathname);
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const absConfigPath = path.resolve(__dirname, configPath);
     const app = new TextureGeneration(absConfigPath);
     app.start();

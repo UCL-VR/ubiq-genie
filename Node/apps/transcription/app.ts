@@ -1,5 +1,4 @@
 // import { UbiqTcpConnection } from 'ubiq-server/ubiq';
-import { MessageReader } from '../../components/message_reader';
 import { ApplicationController } from '../../components/application';
 import { NetworkId } from 'ubiq';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
@@ -8,6 +7,7 @@ import path from 'path';
 import { AudioReceiver } from '../../components/audio_receiver';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
 import { AudioRecorder } from '../../services/audio_recorder/service';
+import { fileURLToPath } from 'url';
 
 class Transcription extends ApplicationController {
     components: {
@@ -97,9 +97,9 @@ class Transcription extends ApplicationController {
 
 export { Transcription };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
     const configPath = './config.json';
-    const __dirname = path.dirname(new URL(import.meta.url).pathname);
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const absConfigPath = path.resolve(__dirname, configPath);
     const app = new Transcription(absConfigPath);
     app.start();

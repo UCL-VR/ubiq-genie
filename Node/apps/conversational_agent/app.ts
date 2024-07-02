@@ -6,6 +6,7 @@ import { TextGenerationService } from '../../services/text_generation/service';
 import { AudioReceiver } from '../../components/audio_receiver';
 import path from 'path';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
+import { fileURLToPath } from 'url';
 
 export class ConversationalAgent extends ApplicationController {
     components: {
@@ -109,9 +110,9 @@ export class ConversationalAgent extends ApplicationController {
     }
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
     const configPath = './config.json';
-    const __dirname = path.dirname(new URL(import.meta.url).pathname);
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const absConfigPath = path.resolve(__dirname, configPath);
     const app = new ConversationalAgent(absConfigPath);
     app.start();

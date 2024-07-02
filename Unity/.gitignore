@@ -70,3 +70,6 @@ crashlytics-build.properties
 # Samples
 /[Aa]ssets/[Ss]amples
 /[Aa]ssets/[Ss]amples.meta
+
+# macOS
+.DS_Store

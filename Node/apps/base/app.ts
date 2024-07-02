@@ -2,6 +2,7 @@ import { ApplicationController } from '../../components/application';
 import { BaseService } from '../../services/base/service';
 import path from 'path';
 import { NetworkId } from 'ubiq';
+import { fileURLToPath } from 'url';
 
 class BaseApplication extends ApplicationController {
     constructor(configPath: string) {
@@ -45,9 +46,9 @@ class BaseApplication extends ApplicationController {
     }
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
     const configPath = './config.json';
-    const __dirname = path.dirname(new URL(import.meta.url).pathname);
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const absConfigPath = path.resolve(__dirname, configPath);
     const app = new BaseApplication(absConfigPath);
     app.start();
