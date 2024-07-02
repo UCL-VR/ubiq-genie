@@ -3,15 +3,16 @@ import { RoomClient } from 'ubiq-server/components/roomclient.js';
 import path from 'path';
 import { spawn } from 'child_process';
 import nconf from 'nconf';
-import { UbiqTcpConnection } from 'ubiq-server/ubiq';
+import { UbiqTcpConnection, TcpConnectionWrapper } from 'ubiq-server/ubiq';
 import { Logger } from './logger';
+import { fileURLToPath } from 'url';
 
 export class ApplicationController {
     name!: string;
     scene!: NetworkScene;
     roomClient!: RoomClient;
     components!: { [key: string]: any };
-    connection!: any;
+    connection!: TcpConnectionWrapper;
     configPath: string;
 
     /**
@@ -58,6 +59,11 @@ export class ApplicationController {
         this.connection = UbiqTcpConnection(nconf.get('roomserver:uri'), nconf.get('roomserver:tcp'));
         this.scene.addConnection(this.connection);
         this.roomClient.join(nconf.get('roomGuid'));
+
+        // This may occur immediately if the server address is invalid or unreachable. In this case, check config.json.
+        this.connection.onClose.push(() => {
+            this.log('Connection to Ubiq server closed.', 'warning');
+        });
     }
 
     /**
@@ -67,7 +73,7 @@ export class ApplicationController {
      * @param configFiles An array of configuration files to pass to the server
      */
     async startServer(configPath?: string): Promise<void> {
-        const __dirname = path.dirname(new URL(import.meta.url).pathname);
+        const __dirname = path.dirname(fileURLToPath(import.meta.url));
         const ubiqPath = path.resolve(__dirname, '..', 'node_modules', 'ubiq-server');
 
         var params = ['start'];
@@ -80,17 +86,18 @@ export class ApplicationController {
         const child = spawn('npm', params, {
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
             cwd: ubiqPath,
+            shell: true,
         });
 
         if (child.stderr) {
             child.stderr.on('data', (data) => {
-                process.stderr.write(`\x1b[31mUbiq server error\x1b[0m: ${data}`);
+                process.stderr.write(`\x1b[31m[Ubiq Server]\x1b[0m ${data}`);
             });
         }
 
         if (child.stdout) {
             child.stdout.on('data', (data) => {
-                process.stdout.write(`\x1b[32mUbiq server output\x1b[0m: ${data}`);
+                process.stdout.write(`\x1b[32m[Ubiq Server]\x1b[0m ${data}`);
             });
         }
 

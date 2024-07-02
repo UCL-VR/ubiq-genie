@@ -3,6 +3,9 @@
 *.wav
 *.mp3
 
+# Certificates
+certs
+
 # Logs
 logs
 *.log

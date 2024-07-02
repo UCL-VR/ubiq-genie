@@ -13,9 +13,11 @@ if (args.length < 1) {
 }
 
 const appName = args[0];
-const configMode = args.includes('config');
+const configMode = args.includes('--config');
 const appDirectory = join(process.cwd(), 'apps', appName);
 const configFilePath = join(appDirectory, 'config.json');
+const envExampleFilePath = join(appDirectory, '.env.example');
+const envFilePath = join(appDirectory, '.env');
 
 if (!existsSync(configFilePath)) {
     console.error(`Configuration file not found for app: ${appName}`);
@@ -24,7 +26,7 @@ if (!existsSync(configFilePath)) {
 
 const config = JSON.parse(readFileSync(configFilePath, 'utf-8'));
 
-async function runConfiguration() {
+async function runConfigJsonConfiguration() {
     const serverType = await select({
         message: 'Would you like your app to create its own Ubiq server, or would you like the app to join an existing one?',
         choices: [
@@ -61,35 +63,39 @@ async function runConfiguration() {
 
     config.configurationComplete = true;
     writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+}
 
-    const envFilePath = join(appDirectory, '.env');
-    if (!existsSync(envFilePath)) {
-        writeFileSync(envFilePath, '# Add your API keys here as per the README instructions');
-        console.log(`A new .env file has been created at ${envFilePath}. Please add the required API keys as per the README instructions.`);
-    } else {
-        const envContent = readFileSync(envFilePath, 'utf-8');
-        const envLines = envContent.split('\n').filter(line => line.trim() !== '');
-        const envConfig: { [key: string]: string } = {};
-
-        for (const line of envLines) {
-            const [key, ...rest] = line.split('=');
-            const value = rest.join('=').split('#')[0].trim();
-            const commentMatch = line.match(/#\s*(.*)/);
-            const comment = commentMatch ? commentMatch[1] : key.trim();
-            envConfig[key.trim()] = value || await input({ message: `Please enter your ${comment}:` });
-        }
-
-        const newEnvContent = Object.entries(envConfig)
-            .map(([key, value]) => `${key}=${value}`)
-            .join('\n');
-        writeFileSync(envFilePath, newEnvContent);
+async function runEnvConfiguration() {
+    if (!existsSync(envExampleFilePath)) {
+        return;
     }
+    
+    const envExampleContent = readFileSync(envExampleFilePath, 'utf-8');
+    const envLines = envExampleContent.split('\n').filter(line => line.trim() !== '');
+    const envConfig: { [key: string]: string } = {};
+
+    for (const line of envLines) {
+        const [key, ...rest] = line.split('=');
+        const commentMatch = rest.join('=').match(/#\s*(.*)/);
+        const comment = commentMatch ? commentMatch[1] : key.trim();
+        envConfig[key.trim()] = await input({ message: `Please enter your ${comment}:` });
+    }
+
+    const newEnvContent = Object.entries(envConfig)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n');
+    writeFileSync(envFilePath, newEnvContent);
+    console.log(`A new .env file has been created at ${envFilePath}.`);
 }
 
 (async () => {
     if (configMode || !config.configurationComplete) {
-        await runConfiguration();
-        console.log('\x1b[1mConfiguration complete. Please ensure to apply the same configuration to the Unity client.\x1b[0m');
+        await runConfigJsonConfiguration();
+        console.log('\x1b[32mConfiguration complete. Please ensure to apply the same configuration to the Unity client.\x1b[0m');
+    }
+
+    if (!existsSync(envFilePath)) {
+        await runEnvConfiguration();
     }
 
     console.log('Executing: ', `node --loader ts-node/esm ./app.ts in directory ${appDirectory}`);

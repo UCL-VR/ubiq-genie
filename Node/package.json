@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node --import \"data:text/javascript,import { register } from 'node:module'; import { pathToFileURL } from 'node:url'; register('ts-node/esm', pathToFileURL('./'));\" bin/cli.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "cd node_modules/ubiq && npm install",
+    "postinstall": "node --import \"data:text/javascript,import { register } from 'node:module'; import { pathToFileURL } from 'node:url'; register('ts-node/esm', pathToFileURL('./'));\" bin/postinstall.ts",
     "lint": "eslint"
   },
   "type": "module",
