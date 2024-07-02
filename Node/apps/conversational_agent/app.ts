@@ -3,14 +3,14 @@ import { ApplicationController } from '../../components/application';
 import { TextToSpeechService } from '../../services/text_to_speech/service';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
 import { TextGenerationService } from '../../services/text_generation/service';
-import { AudioReceiver } from '../../components/audio_receiver';
+import { MediaReceiver } from '../../components/media_receiver';
 import path from 'path';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
 import { fileURLToPath } from 'url';
 
 export class ConversationalAgent extends ApplicationController {
     components: {
-        audioReceiver?: AudioReceiver;
+        mediaReceiver?: MediaReceiver;
         speech2text?: SpeechToTextService;
         textGenerationService?: TextGenerationService;
         textToSpeechService?: TextToSpeechService;
@@ -34,8 +34,8 @@ export class ConversationalAgent extends ApplicationController {
     }
 
     registerComponents() {
-        // An AudioReceiver to receive audio data from peers
-        this.components.audioReceiver = new AudioReceiver(this.scene);
+        // An MediaReceiver to receive audio data from peers
+        this.components.mediaReceiver = new MediaReceiver(this.scene);
 
         // A SpeechToTextService to transcribe audio coming from peers
         this.components.speech2text = new SpeechToTextService(this.scene);
@@ -49,7 +49,7 @@ export class ConversationalAgent extends ApplicationController {
 
     definePipeline() {
         // Step 1: When we receive audio data from a peer we send it to the transcription service and recording service
-        this.components.audioReceiver?.on('data', (uuid: string, data: RTCAudioData) => {
+        this.components.mediaReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
             // Convert the Int16Array to a Buffer
             const sampleBuffer = Buffer.from(data.samples.buffer);
 

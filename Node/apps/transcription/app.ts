@@ -4,7 +4,7 @@ import { NetworkId } from 'ubiq';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
 import fs from 'fs';
 import path from 'path';
-import { AudioReceiver } from '../../components/audio_receiver';
+import { MediaReceiver } from '../../components/media_receiver';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
 import { AudioRecorder } from '../../services/audio_recorder/service';
 import { fileURLToPath } from 'url';
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 class Transcription extends ApplicationController {
     components: {
         audioRecorder?: AudioRecorder;
-        audioReceiver?: AudioReceiver;
+        mediaReceiver?: MediaReceiver;
         speech2text?: SpeechToTextService;
         writer?: fs.WriteStream;
     } = {};
@@ -35,8 +35,8 @@ class Transcription extends ApplicationController {
     }
 
     registerComponents(): void {
-        // An AudioReceiver to receive audio data from peers
-        this.components.audioReceiver = new AudioReceiver(this.scene);
+        // An MediaReceiver to receive audio data from peers
+        this.components.mediaReceiver = new MediaReceiver(this.scene);
 
         // A SpeechToTextService to transcribe audio coming from peers
         this.components.speech2text = new SpeechToTextService(this.scene);
@@ -61,7 +61,7 @@ class Transcription extends ApplicationController {
 
     definePipeline(): void {
         // Step 1: When we receive audio data from a peer we send it to the transcription service and recording service
-        this.components.audioReceiver?.on('data', (uuid: string, data: RTCAudioData) => {
+        this.components.mediaReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
             // Convert the Int16Array to a Buffer
             const sampleBuffer = Buffer.from(data.samples.buffer);
 

@@ -3,11 +3,11 @@ import { PeerConnectionManager } from 'ubiq-server/components/peerconnectionmana
 
 // We use the @roamhq/wrtc package as the regular wrtc package has been abandoned :(
 import wrtc from '@roamhq/wrtc';
-import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
+import { RTCAudioData, RTCVideoData } from '@roamhq/wrtc/types/nonstandard';
 const { RTCPeerConnection, nonstandard } = wrtc;
-const { RTCAudioSink } = nonstandard;
+const { RTCAudioSink, RTCVideoSink } = nonstandard;
 
-export class AudioReceiver extends EventEmitter {
+export class MediaReceiver extends EventEmitter {
     context: any;
     peerConnectionManager: PeerConnectionManager;
 
@@ -129,13 +129,15 @@ export class AudioReceiver extends EventEmitter {
                     case 'audio':
                         let audioSink = new RTCAudioSink(track);
                         audioSink.ondata = (data: RTCAudioData) => {
-                            this.emit('data', component.uuid, data);
+                            this.emit('audio', component.uuid, data);
                         };
 
                         break;
                     case 'video':
-                        console.log('Video track received');
-                        break;
+                        let videoSink = new RTCVideoSink(track);
+                        videoSink.onframe = (frame: RTCVideoData) => {
+                            this.emit('video', component.uuid, frame);
+                        };
                 }
             };
         });

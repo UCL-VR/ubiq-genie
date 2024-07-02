@@ -6,7 +6,7 @@ import { SpeechToTextService } from '../../services/speech_to_text/service';
 import { FileServer } from '../../components/file_server';
 import path from 'path';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
-import { AudioReceiver } from '../../components/audio_receiver';
+import { MediaReceiver } from '../../components/media_receiver';
 import { fileURLToPath } from 'url';
 
 class TextureGeneration extends ApplicationController {
@@ -38,8 +38,8 @@ class TextureGeneration extends ApplicationController {
         // A FileServer to serve image files to clients
         this.components.fileServer = new FileServer('data');
 
-        // An AudioReceiver to receive audio data from peers
-        this.components.audioReceiver = new AudioReceiver(this.scene);
+        // An MediaReceiver to receive audio data from peers
+        this.components.mediaReceiver = new MediaReceiver(this.scene);
 
         // A SpeechToTextService to transcribe audio coming from peers
         this.components.speech2text = new SpeechToTextService(this.scene);
@@ -77,7 +77,7 @@ class TextureGeneration extends ApplicationController {
         });
 
         // Step 2: When we receive audio data from a peer, we send it to the transcription service
-        this.components.audioReceiver?.on('data', (uuid: string, data: RTCAudioData) => {
+        this.components.mediaReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
             // Convert the Int16Array to a Buffer
             const sampleBuffer = Buffer.from(data.samples.buffer);
 
