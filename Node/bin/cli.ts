@@ -13,7 +13,7 @@ if (args.length < 1) {
 }
 
 const appName = args[0];
-const configMode = args.includes('--config');
+const configMode = args.includes('configure');
 const appDirectory = join(process.cwd(), 'apps', appName);
 const configFilePath = join(appDirectory, 'config.json');
 const envExampleFilePath = join(appDirectory, '.env.example');
