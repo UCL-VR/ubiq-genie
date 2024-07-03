@@ -6,6 +6,7 @@ import nconf from 'nconf';
 import { UbiqTcpConnection, TcpConnectionWrapper } from 'ubiq-server/ubiq';
 import { Logger } from './logger';
 import { fileURLToPath } from 'url';
+import * as dotenv from 'dotenv';
 
 export class ApplicationController {
     name!: string;
@@ -31,6 +32,8 @@ export class ApplicationController {
 
         this.configPath = configPath;
         this.name = nconf.get('name');
+
+        dotenv.config({ override: true });
     }
 
     /**

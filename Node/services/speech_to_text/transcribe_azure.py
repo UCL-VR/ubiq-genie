@@ -4,7 +4,6 @@ import json
 import azure.cognitiveservices.speech as speechsdk
 from azure.cognitiveservices.speech.audio import AudioStreamFormat, AudioConfig
 import argparse
-from dotenv import load_dotenv
 
 def recognize_from_stdin(peer):
     speech_config = speechsdk.SpeechConfig(
@@ -47,11 +46,6 @@ def recognize_from_stdin(peer):
             break
 
 def main():
-    if not os.path.exists(".env"):
-        print("Please create a .env file with SPEECH_KEY and SPEECH_REGION in the application root directory.")
-        sys.exit(1)
-    load_dotenv(".env") # Load environment variables from .env file
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--peer", type=str, default="00000000-0000-0000-0000-000000000000")
     args = parser.parse_args()

@@ -2,7 +2,6 @@ import os
 import sys
 import azure.cognitiveservices.speech as speechsdk
 import wave
-from dotenv import load_dotenv
 
 def initialize_speech_synthesizer():
     speech_config = speechsdk.SpeechConfig(
@@ -32,11 +31,6 @@ def transcribe_speech(text, speech_synthesizer):
             print("Did you set the speech resource key and region values?")
 
 def main():
-    if not os.path.exists(".env"):
-        print("Please create a .env file with SPEECH_KEY and SPEECH_REGION in the application root directory.")
-        sys.exit(1)
-    load_dotenv(".env") # Load environment variables from .env file
-
     speech_synthesizer = initialize_speech_synthesizer()
 
     while True:

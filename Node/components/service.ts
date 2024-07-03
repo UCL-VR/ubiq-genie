@@ -88,7 +88,7 @@ class ServiceController extends EventEmitter {
     /**
      * Logs a message to the console with the service name.
      *
-     * @memberof ApplicationController
+     * @memberof ServiceController
      * @param {string} message - The message to log.
      */
     log(message: string, level: 'info' | 'warning' | 'error' = 'info', end: string = '\n'): void {
@@ -107,7 +107,8 @@ class ServiceController extends EventEmitter {
     sendToChildProcess(identifier: string, data: string | Buffer) {
         // console.log("Sending data to child process with identifier: ", identifier, " and data: ", data);
         if (this.childProcesses[identifier] === undefined) {
-            throw new Error(`\x1b[31mService ${this.name} error\x1b[0m: Child process with identifier: ${identifier}`);
+            this.log(`Child process with identifier: ${identifier} not found for service: ${this.name}`, 'error');
+            return;
         }
 
         this.childProcesses[identifier].stdin!.write(data);
