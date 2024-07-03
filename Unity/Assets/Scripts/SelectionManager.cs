@@ -9,11 +9,19 @@ public class SelectionManager : MonoBehaviour
     private NetworkContext context;
     private RoomClient roomClient;
     private NetworkId networkId = new NetworkId(97);
-    public XRRayInteractor rayInteractor;
-    public ActionBasedController actionBasedController; // Add reference to the Action Based Controller
-    private string lastSelection = "";
-    private string currentSelection = "";
-    private bool triggerHeld = false;
+
+    public XRRayInteractor rayInteractorLeft;
+    public ActionBasedController actionBasedControllerLeft;
+    public XRRayInteractor rayInteractorRight;
+    public ActionBasedController actionBasedControllerRight;
+
+    private string lastSelectionLeft = "";
+    private string currentSelectionLeft = "";
+    private bool triggerHeldLeft = false;
+
+    private string lastSelectionRight = "";
+    private string currentSelectionRight = "";
+    private bool triggerHeldRight = false;
 
     void Start()
     {
@@ -23,16 +31,22 @@ public class SelectionManager : MonoBehaviour
 
     void Update()
     {
-        if (actionBasedController.activateAction.action.ReadValue<float>() > 0.1f)
+        HandleController(actionBasedControllerLeft, rayInteractorLeft, ref triggerHeldLeft, ref lastSelectionLeft, ref currentSelectionLeft);
+        HandleController(actionBasedControllerRight, rayInteractorRight, ref triggerHeldRight, ref lastSelectionRight, ref currentSelectionRight);
+    }
+
+    private void HandleController(ActionBasedController controller, XRRayInteractor rayInteractor, ref bool triggerHeld, ref string lastSelection, ref string currentSelection)
+    {
+        if (controller.activateAction.action.ReadValue<float>() > 0.1f)
         {
             if (!triggerHeld)
             {
                 triggerHeld = true;
                 if (rayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
                 {
-                    GetSubmeshName(hit);
+                    GetSubmeshName(hit, ref currentSelection, ref lastSelection);
                 }
-                
+
                 Debug.Log("Sending message: selection = " + currentSelection + ", peer = " + roomClient.Me.uuid + ", triggerHeld = " + triggerHeld);
                 context.SendJson(new SelectionMessage { selection = currentSelection, peer = roomClient.Me.uuid, triggerHeld = triggerHeld });
             }
@@ -45,7 +59,7 @@ public class SelectionManager : MonoBehaviour
                 
                 if (rayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
                 {
-                    GetSubmeshName(hit);
+                    GetSubmeshName(hit, ref currentSelection, ref lastSelection);
                 }
                 
                 if (!string.IsNullOrEmpty(lastSelection))
@@ -59,7 +73,7 @@ public class SelectionManager : MonoBehaviour
         }
     }
 
-    private void GetSubmeshName(RaycastHit raycasthitinfo)
+    private void GetSubmeshName(RaycastHit raycasthitinfo, ref string currentSelection, ref string lastSelection)
     {
         if (raycasthitinfo.collider != null)
         {
