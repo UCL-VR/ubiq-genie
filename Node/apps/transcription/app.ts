@@ -66,8 +66,10 @@ class Transcription extends ApplicationController {
             const sampleBuffer = Buffer.from(data.samples.buffer);
 
             // Send the audio data to the transcription service and the audio recording service
-            this.components.speech2text?.sendToChildProcess(uuid, sampleBuffer);
-            this.components.audioRecorder?.sendToChildProcess(uuid, sampleBuffer);
+            if (this.roomClient.peers.get(uuid) !== undefined) {
+                this.components.speech2text?.sendToChildProcess(uuid, sampleBuffer);
+                this.components.audioRecorder?.sendToChildProcess(uuid, sampleBuffer);
+            }
         });
 
         // Step 2: When we receive a response from the transcription service, write it to a file. Also, send it to the client.

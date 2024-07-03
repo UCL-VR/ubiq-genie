@@ -2,11 +2,12 @@ import { EventEmitter } from 'node:events';
 import { spawn, ChildProcess } from 'child_process';
 import { NetworkScene } from 'ubiq';
 import { Logger } from './logger';
+import { RoomClient } from 'ubiq-server/components/roomclient';
 
 class ServiceController extends EventEmitter {
     name: string;
     config: any;
-    roomClient: any;
+    roomClient: RoomClient;
     childProcesses: { [identifier: string]: ChildProcess };
 
     /**
@@ -20,7 +21,7 @@ class ServiceController extends EventEmitter {
     constructor(scene: NetworkScene, name: string) {
         super();
         this.name = name;
-        this.roomClient = scene.getComponent('RoomClient');
+        this.roomClient = scene.getComponent('RoomClient') as RoomClient;
         this.childProcesses = {};
 
         // Listen for process exit events and ensure child processes are killed
@@ -105,9 +106,8 @@ class ServiceController extends EventEmitter {
      * @throws {Error} Throws an error if the child process with the specified identifier is not found.
      */
     sendToChildProcess(identifier: string, data: string | Buffer) {
-        // console.log("Sending data to child process with identifier: ", identifier, " and data: ", data);
         if (this.childProcesses[identifier] === undefined) {
-            this.log(`Child process with identifier: ${identifier} not found for service: ${this.name}`, 'error');
+            this.log(`Child process with identifier ${identifier} not found for service: ${this.name}`, 'error');
             return;
         }
 
@@ -115,7 +115,7 @@ class ServiceController extends EventEmitter {
     }
 
     /**
-     * Method to kill a specific child processes.
+     * Method to kill a specific child process.
      *
      * @memberof Service
      * @param {string} identifier - The identifier for the child process to kill.
