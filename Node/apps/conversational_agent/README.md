@@ -15,6 +15,8 @@ Follow these steps to run the sample:
 
 ### Server (Node.js)
 
+We recommend using VS Code to run and modify the server application, with the `Node` folder as the workspace root. To run the server application:
+
 1. Open a terminal and navigate to the `Node/apps/conversational_agent` directory. Ensure that your conda or venv environment is activated.
 2. Execute the below command, which will guide you through the configuration process, including setting up the server information and the required environment variables. Configuration will only be run the first time you start the application. Ensure that you apply the same server configuration to the Unity client (in `/Unity/Assets/ServerConfig.asset`).
 
