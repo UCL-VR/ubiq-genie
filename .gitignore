@@ -12,3 +12,6 @@ config/local.json
 .AppleDouble
 .LSOverride
 *.icloud
+
+# IntelliJ IDEA #
+.idea/
