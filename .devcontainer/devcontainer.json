@@ -1,4 +1,4 @@
 {
     "image":"mcr.microsoft.com/devcontainers/universal:2",
-    "postCreateCommand": "cd ./Server && npm install && pip install -r ./samples/requirements.txt"
+    "postCreateCommand": "cd ./Node && npm install"
 }

@@ -1,0 +1,28 @@
+{
+  "name": "Transcription",
+  "roomGuid": "6765c52b-3ad6-4fb0-9030-2c9a05dc4731",
+  "roomserver": {
+    "joinExisting": true,
+    "uri": "localhost",
+    "tcp": {
+      "port": 8009
+    },
+    "wss": {
+      "port": 8010,
+      "cert": "./certs/cert.pem",
+      "key": "./certs/key.pem"
+    }
+  },
+  "status": {
+    "port": 8011,
+    "cert": "./certs/cert.pem",
+    "key": "./certs/key.pem",
+    "apikeys": []
+  },
+  "iceservers": [
+    {
+      "uri": "stun:stun.l.google.com:19302"
+    }
+  ],
+  "configurationComplete": false
+}

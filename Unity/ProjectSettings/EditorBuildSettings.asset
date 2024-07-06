@@ -4,10 +4,5 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes:
-  - enabled: 1
-    path: Assets/Demos/TextureGeneration/TextureGeneration.unity
-    guid: e10becaa62c1348b5b99382ea85dd0fd
-  m_configObjects:
-    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 4cfe853ddce0b4405bebcf6b37c36435, type: 2}
-    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: e84ea8eec73b0456bb6cf3148f0777d8, type: 2}
+  m_Scenes: []
+  m_configObjects: {}

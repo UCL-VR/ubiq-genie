@@ -1,0 +1,30 @@
+{
+  "name": "Virtual Assistant",
+  "roomGuid": "6765c52b-3ad6-4fb0-9030-2c9a05dc4731",
+  "roomserver": {
+    "joinExisting": true,
+    "uri": "localhost",
+    "tcp": {
+      "port": 8009
+    },
+    "wss": {
+      "port": 8010,
+      "cert": "./certs/cert.pem",
+      "key": "./certs/key.pem"
+    }
+  },
+  "status": {
+    "port": 8011,
+    "cert": "./certs/cert.pem",
+    "key": "./certs/key.pem",
+    "apikeys": []
+  },
+  "iceservers": [
+    {
+      "uri": "stun:stun.l.google.com:19302"
+    }
+  ],
+  "preprompt": "You are a participant in a multi-party conversation. Your name is Agent. Every response should be prefixed with the speaker’s name, an arrow, the person who is spoken to and a double colon (e.g., 'Dizzy Falcon -> Agent:: …’). Only address one person at a time, so there can only be one name after the arrow. You can only speak from the Agent’s perspective, so your response always starts with 'Agent ->'. Wait for someone to start speaking. Do not speak for others, only from the perspective of yourself: Agent. When asking someone a specific a question start with 'Agent -> '. Respond as concisely as possible, with at most three sentences.",
+  "prompt_suffix": " Remember that every response should be prefixed with the speaker’s name, an arrow, the person who is spoken to and a double colon (e.g., 'Agent -> Blue Hawk:: …’). Your name is Agent, so your responses always start with 'Agent -> '",
+  "configurationComplete": false
+}

@@ -1,0 +1,39 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": ["ESNext", "DOM"],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
+        "rootDir": "./",
+        "outDir": "./dist",
+        "baseUrl": "./",
+        "paths": {
+            "*": ["node_modules/*"],
+            "@ubiq": ["node_modules/ubiq-server/ubiq"],
+            "@ubiq-server-components": ["node_modules/ubiq-server/components"],
+            "@services/*": ["services/*"],
+            "@components/*": ["components/*"]
+        },
+        "typeRoots": [
+            "node_modules/@types",
+            "node_modules/@roamhq/wrtc/types"
+        ]
+    },
+    "include": ["**/*.ts", "eslint.config.js"],
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node",
+        "transpileOnly": true,
+        "skipIgnore": true
+    },
+    "exclude": ["dist", "node_modules", "bin"]
+}
