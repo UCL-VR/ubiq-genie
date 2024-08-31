@@ -59,14 +59,15 @@ export class ApplicationController {
             );
         }
 
-        this.connection = UbiqTcpConnection(nconf.get('roomserver:uri'), nconf.get('roomserver:tcp'));
-        this.scene.addConnection(this.connection);
-        this.roomClient.join(nconf.get('roomGuid'));
+        this.connection = UbiqTcpConnection(nconf.get('roomserver:uri'), nconf.get('roomserver:tcp:port'));
 
         // This may occur immediately if the server address is invalid or unreachable. In this case, check config.json.
         this.connection.onClose.push(() => {
             this.log('Connection to Ubiq server closed.', 'warning');
         });
+
+        this.scene.addConnection(this.connection);
+        this.roomClient.join(nconf.get('roomGuid'));
     }
 
     /**
