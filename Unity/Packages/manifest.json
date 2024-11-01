@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.ucl.ubiq": "https://github.com/UCL-VR/ubiq.git#upm",
+    "com.unity.burst": "1.8.18",
     "com.unity.collab-proxy": "2.4.3",
     "com.unity.feature.development": "1.0.1",
     "com.unity.textmeshpro": "3.0.6",
