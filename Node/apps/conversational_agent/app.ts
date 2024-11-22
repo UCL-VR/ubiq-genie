@@ -53,8 +53,11 @@ export class ConversationalAgent extends ApplicationController {
             // Convert the Int16Array to a Buffer
             const sampleBuffer = Buffer.from(data.samples.buffer);
 
+
             // Send the audio data to the transcription service and the audio recording service
-            this.components.speech2text?.sendToChildProcess(uuid, sampleBuffer);
+            if (this.roomClient.peers.get(uuid) !== undefined) {
+                this.components.speech2text?.sendToChildProcess(uuid, sampleBuffer);
+            }
         });
 
         // Step 2: When we receive a response from the transcription service, we send it to the text generation service
@@ -81,19 +84,22 @@ export class ConversationalAgent extends ApplicationController {
         // Step 3: When we receive a response from the text generation service, we send it to the text to speech service
         this.components.textGenerationService?.on('data', (data: Buffer, identifier: string) => {
             const response = data.toString();
-            console.log('Received text generation response from child process ' + identifier + ': ' + response);
+            this.log('Received text generation response from child process ' + identifier + ': ' + response, 'info');
 
             // Parse target peer from the response (Agent -> TargetPeer: Message)
             const [, name, message] = response.match(/-> (.*?):: (.*)/) || [];
-            this.targetPeer = name.trim();
-            console.log('message: ' + message);
 
+            if (!name || !message) {
+                this.log('Error parsing target peer and message', 'error');
+                return;
+            }
+
+            this.targetPeer = name.trim();
             this.components.textToSpeechService?.sendToChildProcess('default', message.trim() + '\n');
         });
 
         this.components.textToSpeechService?.on('data', (data: Buffer, identifier: string) => {
             let response = data;
-            console.log('Received TTS response from child process ' + identifier);
 
             this.scene.send(new NetworkId(95), {
                 type: 'AudioInfo',
@@ -102,7 +108,6 @@ export class ConversationalAgent extends ApplicationController {
             });
 
             while (response.length > 0) {
-                console.log('Response length: ' + response.length + ' bytes');
                 this.scene.send(new NetworkId(95), response.slice(0, 16000));
                 response = response.slice(16000);
             }
