@@ -10,9 +10,9 @@ public class SelectionManager : MonoBehaviour
     private RoomClient roomClient;
     private NetworkId networkId = new NetworkId(97);
 
-    public XRRayInteractor rayInteractorLeft;
+    public UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractorLeft;
     public ActionBasedController actionBasedControllerLeft;
-    public XRRayInteractor rayInteractorRight;
+    public UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractorRight;
     public ActionBasedController actionBasedControllerRight;
 
     private string lastSelectionLeft = "";
@@ -35,7 +35,7 @@ public class SelectionManager : MonoBehaviour
         HandleController(actionBasedControllerRight, rayInteractorRight, ref triggerHeldRight, ref lastSelectionRight, ref currentSelectionRight);
     }
 
-    private void HandleController(ActionBasedController controller, XRRayInteractor rayInteractor, ref bool triggerHeld, ref string lastSelection, ref string currentSelection)
+    private void HandleController(ActionBasedController controller, UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractor, ref bool triggerHeld, ref string lastSelection, ref string currentSelection)
     {
         if (controller.activateAction.action.ReadValue<float>() > 0.1f)
         {
