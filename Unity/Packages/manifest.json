@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.ucl.ubiq": "https://github.com/UCL-VR/ubiq.git#upm",
+    "com.ucl.ubiq": "https://github.com/UCL-VR/ubiq.git#upm-unity-v1.0.0-pre.11",
     "com.unity.burst": "1.8.18",
     "com.unity.collab-proxy": "2.4.3",
     "com.unity.feature.development": "1.0.1",

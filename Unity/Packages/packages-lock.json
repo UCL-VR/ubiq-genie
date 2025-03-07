@@ -1,14 +1,15 @@
 {
   "dependencies": {
     "com.ucl.ubiq": {
-      "version": "https://github.com/UCL-VR/ubiq.git#upm",
+      "version": "https://github.com/UCL-VR/ubiq.git#upm-unity-v1.0.0-pre.11",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.shadergraph": "12.1.6",
+        "com.unity.burst": "1.8.18",
         "com.unity.editorcoroutines": "1.0.0"
       },
-      "hash": "a5df4e6653d3050fc8c7a13adaf7f015a52fe4ee"
+      "hash": "708a532ddc8b3f50b07d4a27b4ad76ad0f9b669f"
     },
     "com.unity.burst": {
       "version": "1.8.18",
