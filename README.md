@@ -5,7 +5,7 @@
 Ubiq-Genie is a framework that enables you to build server-assisted collaborative mixed reality applications with Unity using the [Ubiq](https://ubiq.online) framework. This is particularly useful for building multi-user applications that require server-side processing such as generative models, conversational agents, and real-time transcription. For more information, please refer to the [Ubiq-Genie paper](https://ubiq.online/publication/ubiq-genie/).
 
 > [!NOTE]
-> Before starting with Ubiq-Genie, we recommend that you familiarize yourself with the Ubiq framework. For more information, see Ubiq's [documentation](https://ucl-vr.github.io/ubiq/) and [website](https://ubiq.online). Ubiq-Genie currently uses Ubiq [v1.0.0-pre7](https://github.com/UCL-VR/ubiq/releases/tag/unity-v1.0.0-pre.7).
+> Before starting with Ubiq-Genie, we recommend that you familiarize yourself with the Ubiq framework. For more information, see Ubiq's [documentation](https://ucl-vr.github.io/ubiq/) and [website](https://ubiq.online). Ubiq-Genie currently uses Ubiq [v1.0.0-pre.11](https://github.com/UCL-VR/ubiq/releases/tag/unity-v1.0.0-pre.11).
 
 ## Initial Setup
 
