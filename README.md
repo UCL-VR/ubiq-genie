@@ -5,7 +5,7 @@
 Ubiq-Genie is a framework that enables you to build server-assisted collaborative mixed reality applications with Unity using the [Ubiq](https://ubiq.online) framework. This is particularly useful for building multi-user applications that require server-side processing such as generative models, conversational agents, and real-time transcription. For more information, please refer to the [Ubiq-Genie paper](https://ubiq.online/publication/ubiq-genie/).
 
 > [!NOTE]
-> Before starting with Ubiq-Genie, we recommend that you familiarize yourself with the Ubiq framework. For more information, see Ubiq's [documentation](https://ucl-vr.github.io/ubiq/) and [website](https://ubiq.online). Ubiq-Genie currently uses Ubiq [v1.0.0-pre.15](https://github.com/UCL-VR/ubiq/releases/tag/unity-v1.0.0-pre.15).
+> Before starting with Ubiq-Genie, we recommend that you familiarize yourself with the Ubiq framework. For more information, see Ubiq's [documentation](https://ucl-vr.github.io/ubiq/) and [website](https://ubiq.online). Ubiq-Genie currently uses Ubiq [v1.0.0-pre.16](https://github.com/UCL-VR/ubiq/releases/tag/unity-v1.0.0-pre.16).
 
 ## Initial Setup
 
@@ -23,7 +23,7 @@ These instructions will get you a copy of the project up and running to run the 
 
 ### Client (Unity)
 
-1. Install [Unity](https://unity3d.com/get-unity/download) Unity 6.0 LTS (version currently used is Unity 6000.0.48f1).
+1. Install [Unity](https://unity3d.com/get-unity/download) **Unity 6.0 LTS** (version currently used is *Unity 6000.0.48f1*).
 
 2. Clone this repository somewhere on your local machine.
 
