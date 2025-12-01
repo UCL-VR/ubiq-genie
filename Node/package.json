@@ -1,6 +1,6 @@
 {
   "name": "ubiq-genie",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Ubiq-Genie",
   "scripts": {
     "start": "node --import \"data:text/javascript,import { register } from 'node:module'; import { pathToFileURL } from 'node:url'; register('ts-node/esm', pathToFileURL('./'));\" bin/cli.ts",
