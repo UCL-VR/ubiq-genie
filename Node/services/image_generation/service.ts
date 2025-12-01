@@ -1,5 +1,5 @@
 import { ServiceController } from '../../components/service';
-import { NetworkScene } from 'ubiq';
+import { NetworkScene } from 'ubiq-server/ubiq';
 
 class ImageGenerationService extends ServiceController {
     constructor(scene: NetworkScene) {

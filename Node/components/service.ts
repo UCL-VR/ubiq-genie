@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { spawn, ChildProcess } from 'child_process';
-import { NetworkScene } from 'ubiq';
+import { NetworkScene } from 'ubiq-server/ubiq';
 import { Logger } from './logger';
 import { RoomClient } from 'ubiq-server/components/roomclient';
 

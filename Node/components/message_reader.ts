@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { NetworkId } from 'ubiq';
+import { NetworkId } from 'ubiq-server/ubiq';
 
 export class MessageReader extends EventEmitter {
     networkId: NetworkId;

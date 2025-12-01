@@ -1,4 +1,4 @@
-import { NetworkId } from 'ubiq';
+import { NetworkId } from 'ubiq-server/ubiq';
 import { ApplicationController } from '../../components/application';
 import { TextToSpeechService } from '../../services/text_to_speech/service';
 import { SpeechToTextService } from '../../services/speech_to_text/service';

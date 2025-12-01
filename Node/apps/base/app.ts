@@ -1,7 +1,7 @@
 import { ApplicationController } from '../../components/application';
 import { BaseService } from '../../services/base/service';
 import path from 'path';
-import { NetworkId } from 'ubiq';
+import { NetworkId } from 'ubiq-server/ubiq';
 import { fileURLToPath } from 'url';
 
 class BaseApplication extends ApplicationController {

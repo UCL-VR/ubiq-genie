@@ -1,5 +1,5 @@
 import { ServiceController } from '../../components/service';
-import { NetworkScene } from 'ubiq';
+import { NetworkScene } from 'ubiq-server/ubiq';
 import nconf from 'nconf';
 
 export class TextToSpeechService extends ServiceController {

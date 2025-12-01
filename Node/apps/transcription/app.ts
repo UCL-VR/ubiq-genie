@@ -1,6 +1,6 @@
 // import { UbiqTcpConnection } from 'ubiq-server/ubiq';
 import { ApplicationController } from '../../components/application';
-import { NetworkId } from 'ubiq';
+import { NetworkId } from 'ubiq-server/ubiq';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
 import fs from 'fs';
 import path from 'path';

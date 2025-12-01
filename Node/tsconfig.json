@@ -18,6 +18,12 @@
         "baseUrl": "./",
         "paths": {
             "*": ["node_modules/*"],
+            "ubiq-server/ubiq": ["node_modules/ubiq-server/ubiq/index.ts"],
+            "ubiq-server/ubiq/*": ["node_modules/ubiq-server/ubiq/*"],
+            "ubiq-server/components": ["node_modules/ubiq-server/components/index.ts"],
+            "ubiq-server/components/*": ["node_modules/ubiq-server/components/*"],
+            "modules": ["node_modules/ubiq-server/modules/index.ts"],
+            "modules/*": ["node_modules/ubiq-server/modules/*"],
             "@ubiq": ["node_modules/ubiq-server/ubiq"],
             "@ubiq-server-components": ["node_modules/ubiq-server/components"],
             "@services/*": ["services/*"],
@@ -30,10 +36,15 @@
     },
     "include": ["**/*.ts", "eslint.config.js"],
     "ts-node": {
+        "compilerOptions": {
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext"
+        },
         "esm": true,
         "experimentalSpecifierResolution": "node",
         "transpileOnly": true,
-        "skipIgnore": false
+        "skipIgnore": false,
+        "ignore": ["(?:^|[\\\\/])node_modules[\\\\/](?!ubiq-server[\\\\/])"]
     },
     "exclude": ["dist", "node_modules", "bin"]
 }

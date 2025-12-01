@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { ServiceController } from '../../components/service';
-import { NetworkScene } from 'ubiq';
+import { NetworkScene } from 'ubiq-server/ubiq';
 import nconf from 'nconf';
 import path from 'path';
 import { fileURLToPath } from 'url';

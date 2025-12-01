@@ -1,4 +1,4 @@
-import { NetworkScene } from 'ubiq';
+import { NetworkScene } from 'ubiq-server/ubiq';
 import { RoomClient } from 'ubiq-server/components/roomclient.js';
 import path from 'path';
 import { spawn } from 'child_process';

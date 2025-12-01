@@ -1,5 +1,5 @@
 import { ServiceController } from '../../components/service';
-import { NetworkScene } from 'ubiq';
+import { NetworkScene } from 'ubiq-server/ubiq';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
