@@ -33,7 +33,7 @@
         "esm": true,
         "experimentalSpecifierResolution": "node",
         "transpileOnly": true,
-        "skipIgnore": true
+        "skipIgnore": false
     },
     "exclude": ["dist", "node_modules", "bin"]
 }
