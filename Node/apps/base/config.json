@@ -24,5 +24,5 @@
       "uri": "stun:stun.l.google.com:19302"
     }
   ],
-  "configurationComplete": true
+  "configurationComplete": false
 }

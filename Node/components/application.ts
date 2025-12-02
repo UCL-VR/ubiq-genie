@@ -15,6 +15,8 @@ export class ApplicationController {
     components!: { [key: string]: any };
     connection!: TcpConnectionWrapper;
     configPath: string;
+    heartbeatInterval?: NodeJS.Timeout;
+    heartbeatIntervalMs: number;
 
     /**
      * Constructor for the ApplicationController class.
@@ -34,6 +36,9 @@ export class ApplicationController {
         this.name = nconf.get('name');
 
         dotenv.config({ override: true });
+
+        const heartbeatEnvMs = Number(process.env.UBIQ_HEARTBEAT_MS);
+        this.heartbeatIntervalMs = Number.isFinite(heartbeatEnvMs) && heartbeatEnvMs > 0 ? heartbeatEnvMs : 5000;
     }
 
     /**
@@ -64,17 +69,51 @@ export class ApplicationController {
         // This may occur immediately if the server address is invalid or unreachable. In this case, check config.json.
         this.connection.onClose.push(() => {
             this.log('Connection to Ubiq server closed.', 'warning');
+            this.stopHeartbeat();
         });
 
         this.scene.addConnection(this.connection);
+        this.startHeartbeat();
         this.roomClient.join(nconf.get('roomGuid'));
+    }
+
+    /**
+     * Starts a heartbeat ping to keep the Ubiq connection alive.
+     *
+     * @memberof ApplicationController
+     */
+    private startHeartbeat(): void {
+        this.stopHeartbeat();
+        const intervalMs = Math.max(1000, this.heartbeatIntervalMs);
+
+        this.log(`Starting heartbeat ping every ${intervalMs} ms to keep the Ubiq connection alive.`);
+        this.heartbeatInterval = setInterval(() => {
+            try {
+                this.roomClient.ping();
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error);
+                this.log(`Failed to send heartbeat ping: ${message}`, 'warning');
+            }
+        }, intervalMs);
+    }
+
+    /**
+     * Stops the heartbeat ping to keep the Ubiq connection alive.
+     *
+     * @memberof ApplicationController
+     */
+    private stopHeartbeat(): void {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = undefined;
+        }
     }
 
     /**
      * Starts a Ubiq server with the specified configuration files.
      *
      * @memberof ApplicationController
-     * @param configFiles An array of configuration files to pass to the server
+     * @param configPath The path to the configuration file to pass to the server
      */
     async startServer(configPath?: string): Promise<void> {
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
