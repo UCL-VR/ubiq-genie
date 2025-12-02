@@ -23,7 +23,7 @@ These instructions will get you a copy of the project up and running to run the 
 
 ### Client (Unity)
 
-1. Install [Unity](https://unity3d.com/get-unity/download) **6.0 LTS** (version currently used is *Unity 6000.0.48f1*).
+1. Install [Unity](https://unity3d.com/get-unity/download) **6.0 LTS** (version currently used is *Unity 6000.0.63f1*).
 
 2. Clone this repository somewhere on your local machine.
 
