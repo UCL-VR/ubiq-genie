@@ -1,17 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using Ubiq.Networking;
 using UnityEngine;
-using Ubiq.Dictionaries;
 using Ubiq.Messaging;
-using Ubiq.Logging.Utf8Json;
-using Ubiq.Rooms;
 using System;
-using System.Text;
 
 public class MessageReceiver : MonoBehaviour
 {
-    private NetworkId networkId = new NetworkId(99);
+    [SerializeField] public ushort networkIdValue = 99;
+    private NetworkId networkId;
     private NetworkContext context;
 
     [Serializable]
@@ -20,16 +14,10 @@ public class MessageReceiver : MonoBehaviour
         public string data;
     }
 
-    // Start is called before the first frame update
     void Start()
     {
+        networkId = new NetworkId(networkIdValue);
         context = NetworkScene.Register(this, networkId);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 
     public void ProcessMessage(ReferenceCountedSceneGraphMessage data)

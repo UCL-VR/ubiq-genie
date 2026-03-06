@@ -178,8 +178,13 @@ public class MediaTrackManager : MonoBehaviour
 
             Log($"Initiating media connection to {peer.uuid} (pcid={pcid})");
 
-            CreatePeerConnection(pcid, peer.uuid, polite: true);
-
+            // Send RequestPeerConnection BEFORE creating our local peer
+            // connection. Setup() sends the TrackManifest on the pcid, and
+            // the remote side only registers its listener for that pcid
+            // when it processes the RequestPeerConnection. Since Ubiq
+            // messages are ordered (TCP), sending the request first
+            // guarantees the remote listener exists before the manifest
+            // arrives.
             RequestMessage msg;
             msg.type = "RequestPeerConnection";
             msg.networkId = pcid;
@@ -187,6 +192,8 @@ public class MediaTrackManager : MonoBehaviour
 
             networkScene.SendJson(
                 NetworkId.Create(peer.networkId, serviceId), msg);
+
+            CreatePeerConnection(pcid, peer.uuid, polite: true);
         }
         else
         {
