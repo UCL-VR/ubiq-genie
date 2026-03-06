@@ -3,6 +3,12 @@ using UnityEngine;
 using Ubiq.Messaging;
 using System;
 
+/// <summary>
+/// Manages conversational-agent-specific behaviour: tracks which peer the
+/// assistant is speaking to and drives the VirtualAssistantController
+/// animations. Audio reception and playback are handled entirely by
+/// InjectableAudioSource (with receiveFromNetwork = true).
+/// </summary>
 public class ConversationalAgentManager : MonoBehaviour
 {
     private class AssistantSpeechUnit
@@ -14,9 +20,6 @@ public class ConversationalAgentManager : MonoBehaviour
         public float endTime { get { return startTime + samples/(float)AudioSettings.outputSampleRate; } }
     }
 
-    private NetworkId networkId = new NetworkId(95);
-    private NetworkContext context;
-
     public InjectableAudioSource audioSource;
     public VirtualAssistantController assistantController;
     public AudioSourceVolume volume;
@@ -25,24 +28,31 @@ public class ConversationalAgentManager : MonoBehaviour
 
     private List<AssistantSpeechUnit> speechUnits = new List<AssistantSpeechUnit>();
 
-    [Serializable]
-    private struct Message
-    {
-        public string type;
-        public string targetPeer;
-        public string audioLength;
-    }
-
-    // Start is called before the first frame update
     void Start()
     {
-        context = NetworkScene.Register(this,networkId);
+        if (audioSource == null)
+        {
+            Debug.LogError("ConversationalAgentManager: audioSource is not assigned.");
+            return;
+        }
+
+        // Subscribe to audio events from InjectableAudioSource
+        audioSource.OnAudioInfoReceived += OnAudioInfoReceived;
+        audioSource.OnAudioChunkReceived += OnAudioChunkReceived;
     }
 
-    // Update is called once per frame
+    void OnDestroy()
+    {
+        if (audioSource != null)
+        {
+            audioSource.OnAudioInfoReceived -= OnAudioInfoReceived;
+            audioSource.OnAudioChunkReceived -= OnAudioChunkReceived;
+        }
+    }
+
     void Update()
     {
-        while(speechUnits.Count > 0)
+        while (speechUnits.Count > 0)
         {
             if (Time.time > speechUnits[0].endTime)
             {
@@ -62,44 +72,23 @@ public class ConversationalAgentManager : MonoBehaviour
                 speechTarget = speechUnits[0].speechTargetName;
             }
 
-            assistantController.UpdateAssistantSpeechStatus(speechTarget,volume.volume);
+            assistantController.UpdateAssistantSpeechStatus(speechTarget, volume.volume);
         }
     }
 
-    public void ProcessMessage(ReferenceCountedSceneGraphMessage data)
+    private void OnAudioInfoReceived(object sender, AudioInfoReceivedEventArgs e)
     {
-        Debug.Assert(audioSource);
+        speechTargetName = e.TargetPeer;
+        Debug.Log("Received audio for peer: " + e.TargetPeer + " with length: " + e.AudioLength);
+    }
 
-        // If the data is less than 100 bytes, then we have have received the audio info header
-        if (data.data.Length < 100)
-        {
-            // Try to parse the data as a message, if it fails, then we have received the audio data
-            Message message;
-            try
-            {
-                message = data.FromJson<Message>();
-                speechTargetName = message.targetPeer;
-                Debug.Log("Received audio for peer: " + message.targetPeer + " with length: " + message.audioLength);
-                return;
-            }
-            catch (Exception e)
-            {
-                Debug.Log("Received audio data");
-            }
-        }
-
-        if (data.data.Length < 200)
-        {
-            return;
-        }
-
+    private void OnAudioChunkReceived(object sender, AudioChunkReceivedEventArgs e)
+    {
         var speechUnit = new AssistantSpeechUnit();
-        var prevUnit = speechUnits.Count > 0 ? speechUnits[speechUnits.Count-1] : null;
+        var prevUnit = speechUnits.Count > 0 ? speechUnits[speechUnits.Count - 1] : null;
         speechUnit.startTime = prevUnit != null ? prevUnit.endTime : Time.time;
-        speechUnit.samples = data.data.Length/2;
+        speechUnit.samples = e.SampleCount;
         speechUnit.speechTargetName = speechTargetName;
         speechUnits.Add(speechUnit);
-
-        audioSource.InjectPcm(data.data.ToArray());
     }
 }

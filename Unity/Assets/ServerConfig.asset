@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   listenOnIp: 
   listenOnPort: 
-  sendToIp: localhost
+  sendToIp: 128.16.14.135
   sendToPort: 8009
   type: 0
   platforms:
