@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Ubiq.Messaging;
 using System;
+using Ubiq.Genie;
+
+namespace Ubiq.Genie.Samples.ConversationalAgent
+{
 
 /// <summary>
 /// Manages conversational-agent-specific behaviour: tracks which peer the
@@ -92,3 +95,5 @@ public class ConversationalAgentManager : MonoBehaviour
         speechUnits.Add(speechUnit);
     }
 }
+
+} // namespace Ubiq.Genie.Samples.ConversationalAgent

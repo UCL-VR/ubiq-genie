@@ -1,6 +1,6 @@
 {
     "name": "Ubiq.Genie.Samples.SceneDescriber",
-    "rootNamespace": "",
+    "rootNamespace": "Ubiq.Genie.Samples.SceneDescriber",
     "references": [
         "Ubiq.Genie",
         "Ubiq"

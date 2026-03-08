@@ -1,6 +1,6 @@
 {
     "name": "Ubiq.Genie.Samples.ConversationalAgent",
-    "rootNamespace": "",
+    "rootNamespace": "Ubiq.Genie.Samples.ConversationalAgent",
     "references": [
         "Ubiq.Genie",
         "Ubiq"

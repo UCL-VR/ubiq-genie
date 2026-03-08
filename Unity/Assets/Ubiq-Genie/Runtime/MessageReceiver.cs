@@ -2,9 +2,12 @@ using UnityEngine;
 using Ubiq.Messaging;
 using System;
 
+namespace Ubiq.Genie
+{
+
 public class MessageReceiver : MonoBehaviour
 {
-    [SerializeField] public ushort networkIdValue = 99;
+    public ushort networkIdValue = 99;
     private NetworkId networkId;
     private NetworkContext context;
 
@@ -26,3 +29,5 @@ public class MessageReceiver : MonoBehaviour
         Debug.Log("Message received: " + message.data);
     }
 }
+
+} // namespace Ubiq.Genie

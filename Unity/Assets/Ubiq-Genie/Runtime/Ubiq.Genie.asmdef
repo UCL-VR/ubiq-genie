@@ -1,6 +1,6 @@
 {
     "name": "Ubiq.Genie",
-    "rootNamespace": "",
+    "rootNamespace": "Ubiq.Genie",
     "references": [
         "Ubiq",
         "Unity.WebRTC"

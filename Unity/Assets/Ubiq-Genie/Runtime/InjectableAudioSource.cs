@@ -3,6 +3,9 @@ using System.Collections.Concurrent;
 using UnityEngine;
 using Ubiq.Messaging;
 
+namespace Ubiq.Genie
+{
+
 /// <summary>
 /// Event args passed when an audio chunk is received from the network.
 /// </summary>
@@ -37,7 +40,7 @@ public class InjectableAudioSource : MonoBehaviour
     public bool receiveFromNetwork = false;
 
     [Tooltip("The Ubiq network ID to listen on (only used when receiveFromNetwork is true).")]
-    [SerializeField] public ushort networkIdValue = 95;
+    public ushort networkIdValue = 95;
 
     [Header("Playback")]
     [Tooltip("When true, arriving AudioInfo headers clear the playback queue so " +
@@ -72,6 +75,16 @@ public class InjectableAudioSource : MonoBehaviour
     /// ~5 seconds at 48 kHz. Only used when dropOnNewSequence is false.
     /// </summary>
     private const int MAX_QUEUE_SAMPLES = 48000 * 5;
+
+    /// <summary>
+    /// Messages shorter than this are treated as AudioInfo JSON headers.
+    /// </summary>
+    private const int AUDIO_INFO_HEADER_MAX_SIZE = 100;
+
+    /// <summary>
+    /// Raw audio packets smaller than this are discarded as noise.
+    /// </summary>
+    private const int MIN_AUDIO_PACKET_SIZE = 200;
 
     [Serializable]
     private struct AudioInfoMessage
@@ -126,8 +139,7 @@ public class InjectableAudioSource : MonoBehaviour
     /// </summary>
     public void ProcessMessage(ReferenceCountedSceneGraphMessage data)
     {
-        // Short messages (< 100 bytes) are AudioInfo JSON headers
-        if (data.data.Length < 100)
+        if (data.data.Length < AUDIO_INFO_HEADER_MAX_SIZE)
         {
             try
             {
@@ -158,8 +170,7 @@ public class InjectableAudioSource : MonoBehaviour
             }
         }
 
-        // Very small non-header packets are noise — skip them
-        if (data.data.Length < 200)
+        if (data.data.Length < MIN_AUDIO_PACKET_SIZE)
         {
             return;
         }
@@ -222,3 +233,5 @@ public class InjectableAudioSource : MonoBehaviour
         }
     }
 }
+
+} // namespace Ubiq.Genie

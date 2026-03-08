@@ -5,6 +5,9 @@ using UnityEngine;
 using Unity.WebRTC;
 using Ubiq.Messaging;
 
+namespace Ubiq.Genie
+{
+
 /// <summary>
 /// Manages a single RTCPeerConnection for sending custom media tracks to one
 /// remote peer. Created and owned by <see cref="MediaTrackManager"/>.
@@ -486,3 +489,5 @@ public class MediaTrackPeerConnection : MonoBehaviour
             Debug.Log($"[MediaTrackPeerConnection:{peerUuid}] {msg}");
     }
 }
+
+} // namespace Ubiq.Genie

@@ -1,6 +1,6 @@
 {
     "name": "Ubiq.Genie.XRI",
-    "rootNamespace": "",
+    "rootNamespace": "Ubiq.Genie.XRI",
     "references": [
         "Ubiq.Genie",
         "Ubiq",

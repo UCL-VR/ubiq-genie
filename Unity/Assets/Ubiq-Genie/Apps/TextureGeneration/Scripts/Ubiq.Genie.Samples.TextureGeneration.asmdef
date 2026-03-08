@@ -1,6 +1,6 @@
 {
     "name": "Ubiq.Genie.Samples.TextureGeneration",
-    "rootNamespace": "",
+    "rootNamespace": "Ubiq.Genie.Samples.TextureGeneration",
     "references": [
         "Ubiq.Genie",
         "Ubiq",

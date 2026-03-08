@@ -12,6 +12,9 @@ using System.Text;
 using UnityEngine.Networking;
 using Ubiq.XR;
 
+namespace Ubiq.Genie.Samples.TextureGeneration
+{
+
 public class TextureGenerationManager : MonoBehaviour
 {
     private NetworkId networkId = new NetworkId(97);
@@ -155,3 +158,5 @@ public class TextureGenerationManager : MonoBehaviour
         processTextureMessage(message);
     }
 }
+
+} // namespace Ubiq.Genie.Samples.TextureGeneration
