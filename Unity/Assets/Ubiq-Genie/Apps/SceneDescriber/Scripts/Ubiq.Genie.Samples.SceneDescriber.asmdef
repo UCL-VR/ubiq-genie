@@ -1,0 +1,17 @@
+{
+    "name": "Ubiq.Genie.Samples.SceneDescriber",
+    "rootNamespace": "",
+    "references": [
+        "Ubiq.Genie",
+        "Ubiq"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -30,7 +30,7 @@ If you need to reconfigure the application, you can run `npm start stream_descri
 
 ### Client (Unity)
 
-1. Launch Unity and navigate to the `Unity/Assets/Apps/SceneDescriber` directory. Open the `SceneDescriber.unity` scene.
+1. In Unity, open the `SceneDescriber.unity` scene. If you installed the package via git URL (UPM), you first need to import the **Scene Describer** sample from **Window → Package Manager → Ubiq-Genie → Samples**.
 2. Ensure the `Room Client` under the `Network Scene` object has the correct IP address and port for the server. If the server is running on the same machine as the Unity Editor, the IP address should be `localhost`. This should correspond to the configuration on the server side.
 3. In the Unity Editor, press the `Play` button to launch the application.
 4. Press the **Spacebar** to trigger a scene description. The resulting text will appear in the Unity console via the `MessageReceiver` component, and if TTS is enabled, the description will be spoken aloud through the `InjectableAudioSource`.

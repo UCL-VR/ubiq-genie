@@ -11,6 +11,15 @@
       },
       "hash": "93e45c0eb2bbcd9d07441b3aa32d1ef6231e4be9"
     },
+    "com.ucl.ubiq-genie": {
+      "version": "file:../Assets/Ubiq-Genie",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.ucl.ubiq": "1.0.0-pre.16",
+        "com.unity.webrtc-ubiq-fork": "3.0.1-pre.7"
+      }
+    },
     "com.unity.burst": {
       "version": "1.8.27",
       "depth": 0,

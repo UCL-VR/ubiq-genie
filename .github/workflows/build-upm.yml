@@ -1,0 +1,45 @@
+name: Build UPM branch
+
+on:
+  push:
+    branches:
+      - unity-refactor
+
+jobs:
+  build-upm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout unity-refactor
+        uses: actions/checkout@v4
+        with:
+          ref: unity-refactor
+          fetch-depth: 0
+
+      - name: Extract package to root
+        run: |
+          # Move the UPM package contents to the repo root
+          git subtree split -P Unity/Assets/Ubiq-Genie -b upm-staging
+          git checkout upm-staging
+
+      - name: Rename Apps to Samples~
+        run: |
+          if [ -d "Apps" ]; then
+            git mv Apps Samples~
+            git rm Apps.meta
+          fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -am "Build UPM package from ${GITHUB_SHA::8}"
+          git push origin HEAD:upm --force
+
+      # Uncomment the following to tag UPM releases with the version from
+      # package.json. Useful once you start publishing stable versions.
+      #
+      # - name: Tag version
+      #   run: |
+      #     VERSION=$(node -p "require('./package.json').version")
+      #     git tag "v${VERSION}" || true
+      #     git push origin "v${VERSION}" || true

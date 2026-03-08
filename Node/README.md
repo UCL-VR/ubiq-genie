@@ -4,7 +4,7 @@ Ubiq-Genie is a framework that enables you to build server-assisted collaborativ
 
 ## System Architecture
 
-- **Unity Scenes** serve as the interface for VR users and contain application-specific Unity components that communicate with a server-side `ApplicationController` through a TCP connection, using Ubiq's `Networking` components. These client-side components are written in C# and ensure that outgoing and incoming data are processed and routed correctly. The Unity scene of each application can be found in the `Unity/Assets/Apps` folder.
+- **Unity Scenes** serve as the interface for VR users and contain application-specific Unity components that communicate with a server-side `ApplicationController` through a TCP connection, using Ubiq's `Networking` components. These client-side components are written in C# and ensure that outgoing and incoming data are processed and routed correctly. The Unity scenes are distributed as importable samples in the `com.ucl.ubiq-genie` package (see the [package README](../Unity/Assets/Ubiq-Genie/README.md)).
 
 - **Applications** should have an associated Unity scene and `ApplicationController`. The `ApplicationController` is responsible for initializing and managing the services that are required by the application. It also handles the communication between the services and the Unity scene. The `ApplicationController` is written in TypeScript (ESM) and runs on the server. The `ApplicationController` of each of the sample applications can be found in the `app.ts` file in the corresponding folder in the `Node/apps` folder.
 
@@ -90,6 +90,6 @@ To define a new application, follow these steps:
 
 2. Take a look at the `config.json` file in the folder you just created. This file contains the configuration of your application. This includes the name of the application, the GUID of the room that the application will join, the information required to join or start a Ubiq server, and the ICE servers that are used for WebRTC connections. Note that `joinExisting` should be set to `true` if you want to join an existing server, and `false` if you want to start a new server. For more information on Ubiq servers and messages, see the [Ubiq documentation](https://ucl-vr.github.io/ubiq/serverintroduction/).
 
-3. In Unity, duplicate the `Unity/Assets/Apps/Base` folder and rename it to the name of your application (e.g., `MyApplication`). This folder will contain the Unity scene of your application.
+3. In Unity, duplicate the **Base** sample folder as a starting point for your application. If you installed the package via git URL (UPM), first import the **Base** sample from **Window → Package Manager → Ubiq-Genie → Samples**.
 
 4. In the Unity scene hierarchy, navigate to `Ubiq-Genie/`, where we recommend you place any application-specific components that communicate with the server-side process of your Ubiq-Genie application. In the Base application, this is simply a `MessageReceiver` component that listens for messages from the server, which are sent by the Python process of the `BaseService` service that is part of the `BaseApplication` application.
