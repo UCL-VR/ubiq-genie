@@ -4,76 +4,90 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
 
+namespace Ubiq.Genie.XRI
+{
+
 public class SelectionManager : MonoBehaviour
 {
+    private const float TRIGGER_THRESHOLD = 0.1f;
+
     private NetworkContext context;
     private RoomClient roomClient;
     private NetworkId networkId = new NetworkId(97);
 
-    public UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractorLeft;
-    public ActionBasedController actionBasedControllerLeft;
-    public UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractorRight;
-    public ActionBasedController actionBasedControllerRight;
+    [System.Serializable]
+    public class HandState
+    {
+        public UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractor;
+        public ActionBasedController controller;
 
-    private string lastSelectionLeft = "";
-    private string currentSelectionLeft = "";
-    private bool triggerHeldLeft = false;
+        // Runtime state — not serialized by Unity (non-public)
+        [System.NonSerialized] internal string lastSelection;
+        [System.NonSerialized] internal string currentSelection;
+        [System.NonSerialized] internal bool triggerHeld;
+    }
 
-    private string lastSelectionRight = "";
-    private string currentSelectionRight = "";
-    private bool triggerHeldRight = false;
+    public HandState leftHand = new HandState();
+    public HandState rightHand = new HandState();
 
     void Start()
     {
         context = NetworkScene.Register(this, networkId);
         roomClient = RoomClient.Find(this);
+
+        // Initialise runtime state (NonSerialized fields default to null)
+        foreach (var hand in new[] { leftHand, rightHand })
+        {
+            hand.lastSelection = "";
+            hand.currentSelection = "";
+        }
     }
 
     void Update()
     {
-        HandleController(actionBasedControllerLeft, rayInteractorLeft, ref triggerHeldLeft, ref lastSelectionLeft, ref currentSelectionLeft);
-        HandleController(actionBasedControllerRight, rayInteractorRight, ref triggerHeldRight, ref lastSelectionRight, ref currentSelectionRight);
+        HandleController(leftHand);
+        HandleController(rightHand);
     }
 
-    private void HandleController(ActionBasedController controller, UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractor, ref bool triggerHeld, ref string lastSelection, ref string currentSelection)
+    private void HandleController(HandState hand)
     {
-        if (controller.activateAction.action.ReadValue<float>() > 0.1f)
+        if (hand.controller.activateAction.action.ReadValue<float>() > TRIGGER_THRESHOLD)
         {
-            if (!triggerHeld)
+            if (!hand.triggerHeld)
             {
-                triggerHeld = true;
-                if (rayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+                hand.triggerHeld = true;
+                if (hand.rayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
                 {
-                    GetSubmeshName(hit, ref currentSelection, ref lastSelection);
+                    GetSubmeshName(hit, hand);
                 }
 
-                Debug.Log("Sending message: selection = " + currentSelection + ", peer = " + roomClient.Me.uuid + ", triggerHeld = " + triggerHeld);
-                context.SendJson(new SelectionMessage { selection = currentSelection, peer = roomClient.Me.uuid, triggerHeld = triggerHeld });
+                Debug.Log("Sending message: selection = " + hand.currentSelection + ", peer = " + roomClient.Me.uuid + ", triggerHeld = " + hand.triggerHeld);
+                context.SendJson(new SelectionMessage { selection = hand.currentSelection, peer = roomClient.Me.uuid, triggerHeld = hand.triggerHeld });
             }
         }
         else
         {
-            if (triggerHeld)
+            if (hand.triggerHeld)
             {
-                triggerHeld = false;
-                
-                if (rayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+                hand.triggerHeld = false;
+
+                if (hand.rayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
                 {
-                    GetSubmeshName(hit, ref currentSelection, ref lastSelection);
-                }
-                
-                if (!string.IsNullOrEmpty(lastSelection))
-                {
-                    Debug.Log("Sending message: selection = " + lastSelection + ", peer = " + roomClient.Me.uuid + ", triggerHeld = " + triggerHeld);
-                    context.SendJson(new SelectionMessage { selection = lastSelection, peer = roomClient.Me.uuid, triggerHeld = triggerHeld });
+                    GetSubmeshName(hit, hand);
                 }
 
-                currentSelection = ""; // We reset the current selection as the trigger has been released
+                if (!string.IsNullOrEmpty(hand.lastSelection))
+                {
+                    Debug.Log("Sending message: selection = " + hand.lastSelection + ", peer = " + roomClient.Me.uuid + ", triggerHeld = " + hand.triggerHeld);
+                    context.SendJson(new SelectionMessage { selection = hand.lastSelection, peer = roomClient.Me.uuid, triggerHeld = hand.triggerHeld });
+                }
+
+                hand.currentSelection = "";
             }
         }
     }
 
-    private void GetSubmeshName(RaycastHit raycasthitinfo, ref string currentSelection, ref string lastSelection)
+    private static void GetSubmeshName(RaycastHit raycasthitinfo, HandState hand)
     {
         if (raycasthitinfo.collider != null)
         {
@@ -93,10 +107,10 @@ public class SelectionManager : MonoBehaviour
                         {
                             string currentObjectName = raycasthitinfo.collider.gameObject.name;
                             string currentMaterialName = raycasthitinfo.collider.gameObject.GetComponent<Renderer>().materials[i].name;
-                            currentSelection = currentObjectName + ":" + currentMaterialName;
-                            if (currentSelection != lastSelection)
+                            hand.currentSelection = currentObjectName + ":" + currentMaterialName;
+                            if (hand.currentSelection != hand.lastSelection)
                             {
-                                lastSelection = currentSelection;
+                                hand.lastSelection = hand.currentSelection;
                             }
                         }
                     }
@@ -116,3 +130,5 @@ public class SelectionManager : MonoBehaviour
     {
     }
 }
+
+} // namespace Ubiq.Genie.XRI

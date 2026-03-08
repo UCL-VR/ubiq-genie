@@ -1,6 +1,6 @@
 {
     "name": "Ubiq.Genie.Samples.Transcription",
-    "rootNamespace": "",
+    "rootNamespace": "Ubiq.Genie.Samples.Transcription",
     "references": [
         "Ubiq.Genie",
         "Ubiq",

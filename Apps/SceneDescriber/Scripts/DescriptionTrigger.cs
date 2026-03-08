@@ -1,6 +1,9 @@
 using UnityEngine;
 using Ubiq.Messaging;
 
+namespace Ubiq.Genie.Samples.SceneDescriber
+{
+
 /// <summary>
 /// Sends a "trigger" message to the server when the user presses the spacebar.
 /// Attach this to any GameObject in the scene. The server-side stream_describer
@@ -10,7 +13,7 @@ using Ubiq.Messaging;
 public class DescriptionTrigger : MonoBehaviour
 {
     [Tooltip("The Ubiq network ID used to send the trigger message to the server.")]
-    [SerializeField] public ushort networkIdValue = 100;
+    public ushort networkIdValue = 100;
 
     private NetworkContext context;
 
@@ -40,3 +43,5 @@ public class DescriptionTrigger : MonoBehaviour
         public string action;
     }
 }
+
+} // namespace Ubiq.Genie.Samples.SceneDescriber

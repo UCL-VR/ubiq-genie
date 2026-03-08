@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Ubiq.Genie.Samples.ConversationalAgent
+{
+
 public class AudioSourceSpeechIndicator : MonoBehaviour
 {
     public List<Transform> volumeIndicators;
@@ -138,3 +141,5 @@ public class AudioSourceSpeechIndicator : MonoBehaviour
         return samples[index];
     }
 }
+
+} // namespace Ubiq.Genie.Samples.ConversationalAgent

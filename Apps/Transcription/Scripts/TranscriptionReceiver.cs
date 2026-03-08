@@ -9,6 +9,9 @@ using Ubiq.Rooms;
 using System;
 using System.Text;
 
+namespace Ubiq.Genie.Samples.Transcription
+{
+
 public class TranscriptionReceiver : MonoBehaviour
 {
     private NetworkId networkId = new NetworkId(99);
@@ -40,3 +43,5 @@ public class TranscriptionReceiver : MonoBehaviour
         Debug.Log("[" + message.timestamp + "] " + message.peer + ": " + message.data);
     }
 }
+
+} // namespace Ubiq.Genie.Samples.Transcription

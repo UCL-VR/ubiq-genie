@@ -6,6 +6,9 @@ using Unity.WebRTC;
 using Ubiq.Messaging;
 using Ubiq.Rooms;
 
+namespace Ubiq.Genie
+{
+
 /// <summary>
 /// A single media source to send over WebRTC. Configure one or more of
 /// these in the Inspector on <see cref="MediaTrackManager"/>.
@@ -266,3 +269,5 @@ public class MediaTrackManager : MonoBehaviour
             Debug.Log($"[MediaTrackManager] {msg}");
     }
 }
+
+} // namespace Ubiq.Genie

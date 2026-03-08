@@ -1,16 +1,13 @@
-using System.Collections;
 using System.Collections.Generic;
-using Ubiq.Networking;
 using UnityEngine;
-using Ubiq.Dictionaries;
 using Ubiq.Messaging;
-using Ubiq.Logging.Utf8Json;
 using Ubiq.Rooms;
-using System;
-using System.Text;
 using Ubiq.Voip;
 using Ubiq.Samples;
 using Ubiq.Avatars;
+
+namespace Ubiq.Genie.Samples.ConversationalAgent
+{
 
 public class VirtualAssistantController : MonoBehaviour
 {
@@ -20,11 +17,9 @@ public class VirtualAssistantController : MonoBehaviour
     private string assistantSpeechTargetPeerName;
     private float assistantSpeechVolume;
     private IPeer lastTargetPeer;
-    // private MicrophoneCapture microphoneCapture;
 
     private RoomClient roomClient;
     private AvatarManager avatarManager;
-    private VoipPeerConnectionManager peerConnectionManager;
 
     private const float SPEECH_VOLUME_FLOOR = 0.005f;
 
@@ -94,27 +89,6 @@ public class VirtualAssistantController : MonoBehaviour
         else
         {
             var loudestVolume = 0.0f;
-            // TODO: Replace MicrophoneCapture with volume from new WebRTC library
-            // No speech target specified: find the loudest current peer
-            // if (!microphoneCapture)
-            // {
-            //     microphoneCapture = FindObjectOfType<MicrophoneCapture>();
-            // }
-
-            // if (microphoneCapture)
-            // {
-            //     var stats = microphoneCapture.lastFrameStats;
-            //
-            //     if (stats.sampleCount > 0)
-            //     {
-            //         var volume = stats.volumeSum / stats.sampleCount;
-            //         if (volume > 0.01f)
-            //         {
-            //             targetPeer = roomClient.Me;
-            //             loudestVolume = volume;
-            //         }
-            //     }
-            // }
 
             foreach(var avatar in avatarManager.Avatars)
             {
@@ -179,15 +153,7 @@ public class VirtualAssistantController : MonoBehaviour
             Quaternion.LookRotation(facingDirection), turnSpeed * Time.deltaTime);
 
         lastTargetPeer = targetPeer;
-
-        // var assistantFloatingAvatar = GetComponent<FloatingAvatar>();
-        // if (!assistantFloatingAvatar)
-        // {
-        //     return;
-        // }
-        // facingDirection = position - transform.position;
-        // var assistantHead = assistantFloatingAvatar.head;
-        // assistantHead.rotation = Quaternion.Slerp(assistantHead.rotation,
-        //     Quaternion.LookRotation(facingDirection,Vector3.up), turnSpeed * Time.deltaTime);
     }
 }
+
+} // namespace Ubiq.Genie.Samples.ConversationalAgent

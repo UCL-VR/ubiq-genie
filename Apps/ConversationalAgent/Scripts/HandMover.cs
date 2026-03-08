@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Ubiq.Voip;
-using Ubiq.Messaging;
+
+namespace Ubiq.Genie.Samples.ConversationalAgent
+{
 
 public class HandMover : MonoBehaviour
 {
@@ -28,43 +29,9 @@ public class HandMover : MonoBehaviour
 
     private float animTime;
     private bool playing;
-
-    private bool recording;
-    private float recordingStartTime;
     
     public void Update()
     {
-        // if (handController && handController.PrimaryButtonState)
-        // {
-        //     if (!recording)
-        //     {
-        //         leftHandPositions.Clear();
-        //         leftHandRotations.Clear();
-        //         rightHandPositions.Clear();
-        //         rightHandRotations.Clear();
-        //         times.Clear();
-        //         recording = true;
-        //         recordingStartTime = Time.time;
-        //         leftHandIdlePosition = leftHand.localPosition;
-        //         leftHandIdleRotation = leftHand.localRotation;
-        //         rightHandIdlePosition = rightHand.localPosition;
-        //         rightHandIdleRotation = rightHand.localRotation;
-        //     }
-        // }
-        // else
-        // {
-        //     recording = false;
-        // }
-
-        // if (recording)
-        // {
-        //     leftHandPositions.Add(leftHand.localPosition);
-        //     leftHandRotations.Add(leftHand.localRotation);
-        //     rightHandPositions.Add(rightHand.localPosition);
-        //     rightHandRotations.Add(rightHand.localRotation);
-        //     times.Add(Time.time - recordingStartTime);
-        // }
-
         var leftHandTargetPosition = leftHandIdlePosition;
         var leftHandTargetRotation = leftHandIdleRotation;
         var rightHandTargetPosition = rightHandIdlePosition;
@@ -116,3 +83,5 @@ public class HandMover : MonoBehaviour
         playing = false;
     }
 }
+
+} // namespace Ubiq.Genie.Samples.ConversationalAgent
