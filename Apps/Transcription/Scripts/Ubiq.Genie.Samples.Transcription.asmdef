@@ -1,0 +1,18 @@
+{
+    "name": "Ubiq.Genie.Samples.Transcription",
+    "rootNamespace": "",
+    "references": [
+        "Ubiq.Genie",
+        "Ubiq",
+        "Ubiq.Logging.Utf8Json"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

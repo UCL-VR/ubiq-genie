@@ -1,0 +1,48 @@
+{
+    "name": "com.ucl.ubiq-genie",
+    "version": "0.1.0",
+    "displayName": "Ubiq-Genie",
+    "description": "Server-assisted collaborative mixed reality features for Ubiq.",
+    "unity": "6000.0",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "com.ucl.ubiq": "1.0.0-pre.16",
+        "com.unity.webrtc-ubiq-fork": "3.0.1-pre.7"
+    },
+    "author": {
+        "name": "Virtual Environments and Computer Graphics Group, University College London",
+        "url": "https://github.com/UCL-VR/ubiq-genie"
+    },
+    "samples": [
+        {
+            "displayName": "Base",
+            "description": "Minimal scene with Ubiq-Genie networking set up. Use as a starting point for new apps.",
+            "path": "Samples~/Base"
+        },
+        {
+            "displayName": "Conversational Agent",
+            "description": "Voice-driven virtual assistant with avatar animation and speech indicators.",
+            "path": "Samples~/ConversationalAgent"
+        },
+        {
+            "displayName": "Scene Describer",
+            "description": "Captures the current camera view and sends it to the server for a textual scene description.",
+            "path": "Samples~/SceneDescriber"
+        },
+        {
+            "displayName": "Texture Generation",
+            "description": "AI-generated textures applied to scene materials based on keywords.",
+            "path": "Samples~/TextureGeneration"
+        },
+        {
+            "displayName": "Transcription",
+            "description": "Real-time speech-to-text transcription displayed in-scene.",
+            "path": "Samples~/Transcription"
+        },
+        {
+            "displayName": "Video Recorder",
+            "description": "Records the scene from a virtual camera and streams to the server.",
+            "path": "Samples~/VideoRecorder"
+        }
+    ]
+}

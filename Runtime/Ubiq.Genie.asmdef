@@ -1,0 +1,17 @@
+{
+    "name": "Ubiq.Genie",
+    "rootNamespace": "",
+    "references": [
+        "Ubiq",
+        "Unity.WebRTC"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
