@@ -1,6 +1,6 @@
 {
   "name": "VideoRecorder",
-  "roomGuid": "6765c52b-3ad6-4fb0-9030-2c9a05dc4731",
+  "roomGuid": "f288444f-cc1a-485b-b6b0-d007bc465873",
   "roomserver": {
     "joinExisting": false,
     "uri": "localhost",
