@@ -11,7 +11,21 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "UBIQ_GENIE_HAS_UBIQ",
+        "UBIQ_GENIE_HAS_WEBRTC"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.ucl.ubiq",
+            "expression": "",
+            "define": "UBIQ_GENIE_HAS_UBIQ"
+        },
+        {
+            "name": "com.unity.webrtc-ubiq-fork",
+            "expression": "",
+            "define": "UBIQ_GENIE_HAS_WEBRTC"
+        }
+    ],
     "noEngineReferences": false
 }
