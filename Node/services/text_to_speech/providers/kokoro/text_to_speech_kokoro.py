@@ -76,7 +76,13 @@ def main():
         try:
             text = input()
             if text.strip():
+                sys.stdout.buffer.write(b">BUSY\n")
+                sys.stdout.buffer.flush()
+
                 synthesize_and_stream(pipeline, text.strip())
+
+                sys.stdout.buffer.write(b">IDLE\n")
+                sys.stdout.buffer.flush()
         except (KeyboardInterrupt, EOFError):
             break
 

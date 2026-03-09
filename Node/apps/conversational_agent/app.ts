@@ -14,7 +14,6 @@ import {
     KIND_ERROR,
     downsample48kTo24k,
     upsample24kTo48k,
-    createPersonaPlexProvider,
 } from '../../services/audio_to_audio/providers/personaplex/index';
 import path from 'path';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
@@ -86,22 +85,11 @@ export class ConversationalAgent extends ApplicationController {
         this.components.voipReceiver = new VoipReceiver(this.scene);
 
         if (this.useAudioToAudio) {
-            // Audio-to-audio mode: single PersonaPlex service replaces STT + text gen + TTS
-            const personaplexConfig = nconf.get('personaplex') ?? {};
-            const provider = createPersonaPlexProvider({
-                voicePrompt: personaplexConfig.voicePrompt,
-                textPrompt: personaplexConfig.textPrompt,
-                device: personaplexConfig.device,
-                cpuOffload: personaplexConfig.cpuOffload,
-                tempAudio: personaplexConfig.tempAudio,
-                tempText: personaplexConfig.tempText,
-                topkAudio: personaplexConfig.topkAudio,
-                topkText: personaplexConfig.topkText,
-            });
-            this.components.audioToAudioService = new AudioToAudioService(this.scene, provider);
-            this.log('Using audio-to-audio pipeline (PersonaPlex)');
+            // Audio-to-audio mode: provider auto-resolved from config.json services section
+            this.components.audioToAudioService = new AudioToAudioService(this.scene);
+            this.log('Using audio-to-audio pipeline (resolved from config)');
         } else {
-            // Traditional pipeline: STT → text generation → TTS
+            // Traditional pipeline: STT → text generation → TTS (all auto-resolved from config)
             this.components.speech2text = new SpeechToTextService(this.scene);
             this.components.textGenerationService = new TextGenerationService(this.scene);
             this.components.textToSpeechService = new TextToSpeechService(this.scene);

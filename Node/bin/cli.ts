@@ -65,6 +65,45 @@ async function runConfigJsonConfiguration() {
     writeFileSync(configFilePath, JSON.stringify(config, null, 2));
 }
 
+/**
+ * Prompts the user to configure per-service settings (Python paths, external repos, etc.)
+ * based on the `services` section in config.json.
+ */
+async function runServiceConfiguration() {
+    if (!config.services) return;
+
+    for (const [serviceKey, serviceConf] of Object.entries(config.services) as [string, any][]) {
+        const displayName = serviceKey.replace(/([A-Z])/g, ' $1').trim();
+
+        // Configure external repo path
+        if (serviceConf.externalRepo) {
+            const repoUrl = serviceConf.externalRepo.url ?? '';
+            const currentPath = serviceConf.externalRepo.path ?? '';
+            const repoPath = await input({
+                message: `Enter the absolute path to the ${displayName} repository${repoUrl ? ` (${repoUrl})` : ''}:`,
+                default: currentPath || undefined,
+            });
+            if (repoPath.trim()) {
+                serviceConf.externalRepo.path = repoPath.trim();
+            }
+        }
+
+        // Configure Python command for the service
+        if (serviceConf.python) {
+            const currentCommand = serviceConf.python.command ?? '';
+            const pythonCommand = await input({
+                message: `Enter the Python command for ${displayName} (absolute path to venv python):`,
+                default: currentCommand || undefined,
+            });
+            if (pythonCommand.trim()) {
+                serviceConf.python.command = pythonCommand.trim();
+            }
+        }
+    }
+
+    writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+}
+
 async function runEnvConfiguration() {
     if (!existsSync(envExampleFilePath)) {
         return;
@@ -91,6 +130,7 @@ async function runEnvConfiguration() {
 (async () => {
     if (configMode || !config.configurationComplete) {
         await runConfigJsonConfiguration();
+        await runServiceConfiguration();
         console.log('\x1b[32mConfiguration complete. Please ensure to apply the same configuration to the Unity client.\x1b[0m');
     }
 

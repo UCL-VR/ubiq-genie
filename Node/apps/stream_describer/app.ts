@@ -3,9 +3,7 @@ import { ApplicationController } from '../../components/application';
 import { MediaReceiver } from '../../components/media_receiver';
 import { MessageReader } from '../../components/message_reader';
 import { VisualQuestionAnsweringService } from '../../services/visual_question_answering/service';
-import { createFastVLMProvider } from '../../services/visual_question_answering/providers/fastvlm/provider';
 import { TextToSpeechService } from '../../services/text_to_speech/service';
-import { KokoroTTSProvider } from '../../services/text_to_speech/providers/kokoro/provider';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import nconf from 'nconf';
@@ -91,16 +89,13 @@ class StreamDescriber extends ApplicationController {
         // MessageReader to receive manual trigger messages from Unity (spacebar)
         this.components.triggerReader = new MessageReader(this.scene, TRIGGER_NETWORK_ID);
 
-        // VisualQuestionAnsweringService (official ml-fastvlm)
-        const vqaProvider = createFastVLMProvider({
-            modelPath: nconf.get('fastvlmModelPath'),
-        });
-        this.components.vqa = new VisualQuestionAnsweringService(this.scene, vqaProvider);
+        // VisualQuestionAnsweringService — provider auto-resolved from config.json services section
+        this.components.vqa = new VisualQuestionAnsweringService(this.scene);
 
-        // Optional: TextToSpeechService to convert descriptions to audio
+        // Optional: TextToSpeechService — provider auto-resolved from config.json services section
         if (this.ttsEnabled) {
-            this.components.tts = new TextToSpeechService(this.scene, KokoroTTSProvider);
-            this.log('TTS enabled — descriptions will also be sent as audio (Kokoro)');
+            this.components.tts = new TextToSpeechService(this.scene);
+            this.log('TTS enabled — descriptions will also be sent as audio');
         }
     }
 
@@ -124,6 +119,12 @@ class StreamDescriber extends ApplicationController {
     }
 
     definePipeline(): void {
+        // Use ServiceController's built-in readiness detection (>READY marker auto-stripped)
+        this.components.vqa?.waitForReady().then(() => {
+            this.vqaReady = true;
+            this.log('VQA service is ready');
+        });
+
         // --- Step 1: Receive video frames and forward to VQA service ---
         this.components.mediaReceiver?.on(
             'video',
@@ -182,7 +183,8 @@ class StreamDescriber extends ApplicationController {
 
         // --- Step 2: When VQA service returns a result, send it to Unity ---
         // stdout data events can deliver partial lines, so we accumulate
-        // a buffer and split on newlines.
+        // a buffer and split on newlines. State markers (>READY, >BUSY, >IDLE)
+        // are auto-stripped by ServiceController, so we only see actual data here.
         this.components.vqa?.on('data', (data: Buffer, _identifier: string) => {
             this.stdoutBuffer += data.toString();
 
@@ -193,13 +195,6 @@ class StreamDescriber extends ApplicationController {
                 this.stdoutBuffer = this.stdoutBuffer.slice(newlineIdx + 1);
 
                 if (!line) {
-                    continue;
-                }
-
-                // Check for the readiness signal from the VQA child process
-                if (line === '>READY') {
-                    this.vqaReady = true;
-                    this.log('VQA service is ready');
                     continue;
                 }
 
@@ -238,25 +233,14 @@ class StreamDescriber extends ApplicationController {
 
         // --- Step 3: Accumulate TTS audio and flush as a single sequence ---
         if (this.ttsEnabled && this.components.tts) {
-            const READY_MARKER = Buffer.from('>READY\n');
-            let preReadyBuffer = Buffer.alloc(0);
+            // Use ServiceController's built-in readiness detection
+            this.components.tts.waitForReady().then(() => {
+                this.ttsReady = true;
+                this.log('TTS service is ready');
+            });
 
             this.components.tts.on('data', (data: Buffer, _identifier: string) => {
-                // Gate on readiness
-                if (!this.ttsReady) {
-                    preReadyBuffer = Buffer.concat([preReadyBuffer, data]);
-                    const markerIdx = preReadyBuffer.indexOf(READY_MARKER);
-                    if (markerIdx === -1) return;
-                    this.ttsReady = true;
-                    this.log('TTS service is ready');
-                    const remainder = preReadyBuffer.subarray(markerIdx + READY_MARKER.length);
-                    preReadyBuffer = Buffer.alloc(0);
-                    if (remainder.length === 0) return;
-                    // Fall through with remainder as first audio data
-                    this.accumulateTtsChunk(remainder);
-                    return;
-                }
-
+                if (!this.ttsReady) return;
                 this.accumulateTtsChunk(data);
             });
         }

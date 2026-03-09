@@ -9,15 +9,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /**
  * Resolve the ml-fastvlm repository path from config.
  *
- * The `fastvlmRepoPath` key in config.json must be an absolute path pointing
- * to the cloned ml-fastvlm repository. The directory must contain `llava/`.
+ * Checks (in order):
+ *   1. `services.visualQuestionAnswering.externalRepo.path` (new config structure)
+ *   2. `fastvlmRepoPath` (legacy config key)
  */
 function resolveRepoPath(): string {
-    const configured: unknown = nconf.get('fastvlmRepoPath');
+    const fromServices: unknown = nconf.get('services:visualQuestionAnswering:externalRepo:path');
+    const configured: unknown = (typeof fromServices === 'string' && fromServices.trim().length > 0)
+        ? fromServices
+        : nconf.get('fastvlmRepoPath');
+
     if (typeof configured !== 'string' || configured.trim().length === 0) {
         throw new Error(
-            'fastvlmRepoPath must be set in config.json. ' +
-            'Provide the absolute path to the ml-fastvlm repository.\n' +
+            'ml-fastvlm repo path must be set in config.json under ' +
+            'services.visualQuestionAnswering.externalRepo.path (or legacy key fastvlmRepoPath).\n' +
             'Clone: git clone https://github.com/apple/ml-fastvlm\n' +
             'Install: pip install -e /path/to/ml-fastvlm\n' +
             'Download models: cd /path/to/ml-fastvlm && bash get_models.sh'
@@ -68,16 +73,18 @@ export interface FastVLMProviderOptions {
  *   - Clone: git clone https://github.com/apple/ml-fastvlm
  *   - Install: pip install -e /path/to/ml-fastvlm
  *   - Download checkpoints: cd /path/to/ml-fastvlm && bash get_models.sh
- *   - Set "fastvlmRepoPath" in your app's config.json
+ *   - Set repo path in config.json under services.visualQuestionAnswering.externalRepo.path
  *
  * @param options - Model and generation overrides.
  */
 export function createFastVLMProvider(options?: FastVLMProviderOptions): ServiceProvider {
     const repoPath = resolveRepoPath();
 
-    // Resolve model path: absolute paths pass through; relative names are
-    // resolved under {repoPath}/checkpoints/.
-    const modelName = options?.modelPath ?? 'llava-fastvithd_0.5b_stage3';
+    // Resolve model path: check options, then services config, then legacy config, then default
+    const modelName = options?.modelPath
+        ?? (nconf.get('services:visualQuestionAnswering:model') as string | undefined)
+        ?? (nconf.get('fastvlmModelPath') as string | undefined)
+        ?? 'llava-fastvithd_0.5b_stage3';
     const modelPath = path.isAbsolute(modelName)
         ? modelName
         : path.join(repoPath, 'checkpoints', modelName);

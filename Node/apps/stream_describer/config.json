@@ -24,10 +24,23 @@
       "uri": "stun:stun.l.google.com:19302"
     }
   ],
-  "fastvlmRepoPath": "/home/nels/git/ml-fastvlm",
-  "fastvlmModelPath": "/home/nels/git/ml-fastvlm/checkpoints/llava-fastvithd_1.5b_stage3",
-  "pythonCommand": "/home/nels/git/ml-fastvlm/.venv/bin/python",
   "prompt": "<image>\nProvide a caption of this image. Be very concise and use at most one sentence. Do not mention it is a video game.\n",
   "tts": true,
+  "services": {
+    "visualQuestionAnswering": {
+      "provider": "fastvlm",
+      "model": "llava-fastvithd_1.5b_stage3",
+      "python": {
+        "command": "/home/nels/git/ml-fastvlm/.venv/bin/python"
+      },
+      "externalRepo": {
+        "path": "/home/nels/git/ml-fastvlm",
+        "url": "https://github.com/apple/ml-fastvlm"
+      }
+    },
+    "textToSpeech": {
+      "provider": "kokoro"
+    }
+  },
   "configurationComplete": false
 }

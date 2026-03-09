@@ -22,6 +22,8 @@ def generate_texture_from_prompt(pipe, generator, message):
     message = message.decode()
     if message and not busy:
         busy = True
+        sys.stdout.write(">BUSY\n")
+        sys.stdout.flush()
         message = json.loads(message)
         prompt = message["prompt"]
         file_name = message["output_file"] + ".png"
@@ -32,6 +34,8 @@ def generate_texture_from_prompt(pipe, generator, message):
         image.save(fullpath)
         print(file_name)
         busy = False
+        sys.stdout.write(">IDLE\n")
+        sys.stdout.flush()
 
 def recognize_from_stdin():
     global pipe, generator, done, busy
@@ -46,6 +50,9 @@ def recognize_from_stdin():
         pipe.to(device)
         pipe.enable_attention_slicing()
         generator = torch.Generator(device).manual_seed(1024)
+
+    sys.stdout.write(">READY\n")
+    sys.stdout.flush()
 
     while not done:
         try:

@@ -6,14 +6,20 @@ import nconf from 'nconf';
 /**
  * Resolve the PersonaPlex installation directory from config.
  *
- * The `personaplexPath` key in config.json must be an absolute path pointing
- * to the cloned PersonaPlex repository. The directory must contain `moshi/`.
+ * Checks (in order):
+ *   1. `services.audioToAudio.externalRepo.path` (new config structure)
+ *   2. `personaplexPath` (legacy config key)
  */
 function resolvePersonaPlexPath(): string {
-    const configured: unknown = nconf.get('personaplexPath');
+    const fromServices: unknown = nconf.get('services:audioToAudio:externalRepo:path');
+    const configured: unknown = (typeof fromServices === 'string' && fromServices.trim().length > 0)
+        ? fromServices
+        : nconf.get('personaplexPath');
+
     if (typeof configured !== 'string' || configured.trim().length === 0) {
         throw new Error(
-            'personaplexPath must be set in config.json. ' +
+            'PersonaPlex repo path must be set in config.json under ' +
+            'services.audioToAudio.externalRepo.path (or legacy key personaplexPath). ' +
             'Provide the absolute path to the PersonaPlex repository, e.g. "/home/user/personaplex".'
         );
     }

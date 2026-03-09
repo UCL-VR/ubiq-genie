@@ -1,11 +1,10 @@
-"""Qwen3-4B-Instruct-2507 local text generation with streaming output.
+"""HuggingFace Transformers local text generation with streaming output.
 
 Reads user messages from stdin (one per line), streams response tokens to
 stdout prefixed with '>'.  Falls back gracefully: CUDA -> MPS -> CPU.
 
-NOTE: This model requires ~8 GB for weights in float16, plus KV cache and
-activations.  On machines with 16 GB of RAM it may swap heavily or freeze.
-Consider using the GGUF-quantised variant via llama.cpp or ollama instead.
+NOTE: Large models require significant RAM in float16 (e.g., ~12-14 GB for
+Qwen3-4B). Consider using the GGUF-quantised variant via llama.cpp or ollama.
 """
 
 import sys
@@ -13,9 +12,6 @@ import argparse
 import threading
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
-
-MODEL_NAME = "Qwen/Qwen3-4B-Instruct-2507"
-
 
 def get_device_and_dtype():
     """Pick the best available device and a compatible dtype."""
@@ -26,14 +22,14 @@ def get_device_and_dtype():
     return "cpu", torch.float32
 
 
-def load_model():
+def load_model(model_name):
     """Load the tokenizer and model once at startup."""
     device, dtype = get_device_and_dtype()
-    print(f"Loading model {MODEL_NAME} on {device} ({dtype})...", file=sys.stderr)
+    print(f"Loading model {model_name} on {device} ({dtype})...", file=sys.stderr)
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME,
+        model_name,
         torch_dtype=dtype,
     ).to(device)
 
@@ -87,10 +83,12 @@ def generate_streaming(tokenizer, model, message_log):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, default="Qwen/Qwen3-4B-Instruct-2507",
+                        help="HuggingFace model ID or absolute path to a local model directory")
     parser.add_argument("--preprompt", type=str, default="")
     args = parser.parse_args()
 
-    tokenizer, model = load_model()
+    tokenizer, model = load_model(args.model)
 
     message_log = []
     if args.preprompt:
@@ -108,11 +106,15 @@ def main():
                 continue
 
             user_text = line.decode("utf-8").strip()
-            print(f"[hf-qwen] IN:  {user_text!r}", file=sys.stderr)
+            print(f"[hf] IN:  {user_text!r}", file=sys.stderr)
             message_log.append({"role": "user", "content": user_text})
 
+            sys.stdout.write(">BUSY\n")
+            sys.stdout.flush()
             response = generate_streaming(tokenizer, model, message_log)
-            print(f"[hf-qwen] OUT: {response!r}", file=sys.stderr)
+            sys.stdout.write(">IDLE\n")
+            sys.stdout.flush()
+            print(f"[hf] OUT: {response!r}", file=sys.stderr)
             message_log.append({"role": "assistant", "content": response})
         except KeyboardInterrupt:
             break
