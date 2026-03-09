@@ -73,7 +73,10 @@ async function runServiceConfiguration() {
     if (!config.services) return;
 
     for (const [serviceKey, serviceConf] of Object.entries(config.services) as [string, any][]) {
-        const displayName = serviceKey.replace(/([A-Z])/g, ' $1').trim();
+        const displayName = serviceKey
+            .replace(/([A-Z])/g, ' $1')
+            .trim()
+            .toLowerCase();
 
         // Configure external repo path
         if (serviceConf.externalRepo) {
