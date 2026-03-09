@@ -1,6 +1,6 @@
 {
   "name": "Virtual Assistant",
-  "roomGuid": "6765c52b-3ad6-4fb0-9030-2c9a05dc4731",
+  "roomGuid": "452dbb15-1985-45b1-9b26-507026655332",
   "roomserver": {
     "joinExisting": false,
     "uri": "localhost",

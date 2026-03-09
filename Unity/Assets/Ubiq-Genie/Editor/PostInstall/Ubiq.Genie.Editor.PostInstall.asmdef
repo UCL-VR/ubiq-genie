@@ -1,0 +1,26 @@
+{
+    "name": "Ubiq.Genie.Editor.PostInstall",
+    "rootNamespace": "Ubiq.Genie.Editor",
+    "references": [
+        "Ubiq.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UBIQ_GENIE_HAS_UBIQ"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.ucl.ubiq",
+            "expression": "",
+            "define": "UBIQ_GENIE_HAS_UBIQ"
+        }
+    ],
+    "noEngineReferences": false
+}

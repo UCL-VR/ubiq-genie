@@ -23,16 +23,31 @@ These instructions will get you a copy of the project up and running to run the 
 
 ### Client (Unity)
 
-1. Install [Unity](https://unity3d.com/get-unity/download) **6.0 LTS** (version currently used is *Unity 6000.0.67f1*).
+Install [Unity](https://unity3d.com/get-unity/download) **6.0 LTS** (version currently used is *Unity 6000.0.67f1*). There are two ways to set up the Unity client:
 
-2. Clone this repository somewhere on your local machine.
+#### Option A: Use the Included Unity Project
 
-3. Add the `Unity` folder to Unity Hub and open the project in Unity.
+This is the quickest way to explore the samples.
 
-4. Navigate to Package Manager, click the Ubiq package (com.ucl.ubiq), navigate to the "Samples" tab, and import the "Demo (XRI)" sample. This will add the Unity XR Interaction Toolkit package to the project, as well as some scripts used by the Ubiq-Genie sample applications.
+1. Clone or download this repository if you haven't already, and add the `Unity` folder to Unity Hub. The Ubiq-Genie package (`com.ucl.ubiq-genie`) is included as an embedded package and will be loaded automatically.
+2. Wait for Unity to finish importing. On first open, Ubiq-Genie will automatically install its dependencies and import Ubiq's **Demo (XRI)** sample, which adds the XR Interaction Toolkit. This may trigger several editor restarts.
+3. In the Project window, navigate to `Assets/Ubiq-Genie/Apps/` and open any sample scene.
+
+#### Option B: Add Ubiq-Genie to Your Own Project
+
+Use this if you want to integrate Ubiq-Genie into an existing Unity project.
+
+1. In Unity, go to **Window → Package Manager → + → Add package from git URL** and enter:
+
+    ```
+    https://github.com/UCL-VR/ubiq-genie.git#upm
+    ```
+
+2. Wait for Unity to finish importing. Ubiq-Genie will automatically install its dependencies. This may trigger several editor restarts.
+3. Import any Ubiq-Genie sample from **Window → Package Manager → Ubiq-Genie → Samples** and open its scene.
 
 > [!NOTE]
-> Read the README file in the corresponding folder in the `Node/apps` folder for further setup instructions. For a list of available samples, see the [Samples](#samples) section below.
+> Regardless of which option you choose, you need a running Ubiq-Genie server — see the [Server setup](#server-nodejs) above. Read the README in the corresponding `Node/apps` folder for sample-specific instructions. For a list of available samples, see the [Samples](#samples) section below.
 
 ## Documentation
 
