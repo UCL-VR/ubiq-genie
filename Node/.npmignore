@@ -1,0 +1,19 @@
+# Development files
+.eslintrc.json
+.prettierrc
+.gitignore
+tsconfig.build.json
+
+# Runtime/generated
+node_modules/
+certs/
+dist/
+*.log
+
+# App-specific data
+apps/*/recordings/
+apps/*/.env
+apps/*/data/
+
+# Package manager
+package-lock.json
