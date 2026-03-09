@@ -5,10 +5,7 @@
     "description": "Server-assisted collaborative mixed reality features for Ubiq.",
     "unity": "6000.0",
     "license": "Apache-2.0",
-    "dependencies": {
-        "com.ucl.ubiq": "1.0.0-pre.16",
-        "com.unity.webrtc-ubiq-fork": "3.0.1-pre.7"
-    },
+    "dependencies": {},
     "author": {
         "name": "Virtual Environments and Computer Graphics Group, University College London",
         "url": "https://github.com/UCL-VR/ubiq-genie"
