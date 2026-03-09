@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Ubiq.Messaging;
 
 namespace Ubiq.Genie.Samples.SceneDescriber
@@ -25,7 +26,7 @@ public class DescriptionTrigger : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             Debug.Log("DescriptionTrigger: Spacebar pressed — sending trigger to server");
             context.SendJson(new TriggerMessage { action = "describe" });
