@@ -30,7 +30,7 @@ Install [Unity](https://unity3d.com/get-unity/download) **6.0 LTS** (version cur
 This is the quickest way to explore the samples.
 
 1. Clone or download this repository if you haven't already, and add the `Unity` folder to Unity Hub. The Ubiq-Genie package (`com.ucl.ubiq-genie`) is included as an embedded package and will be loaded automatically.
-2. In the Package Manager, select the **Ubiq** package (`com.ucl.ubiq`), open the **Samples** tab, and import **Demo (XRI)**. This adds the XR Interaction Toolkit and scripts used by the samples.
+2. Wait for Unity to finish importing. On first open, Ubiq-Genie will automatically install its dependencies and import Ubiq's **Demo (XRI)** sample, which adds the XR Interaction Toolkit. This may trigger several editor restarts.
 3. In the Project window, navigate to `Assets/Ubiq-Genie/Apps/` and open any sample scene.
 
 #### Option B: Add Ubiq-Genie to Your Own Project
@@ -43,9 +43,7 @@ Use this if you want to integrate Ubiq-Genie into an existing Unity project.
     https://github.com/UCL-VR/ubiq-genie.git#upm
     ```
 
-    This installs the Ubiq-Genie package and its dependencies (Ubiq and Unity WebRTC).
-
-2. In the Package Manager, select the **Ubiq** package (`com.ucl.ubiq`), open the **Samples** tab, and import **Demo (XRI)**.
+2. Wait for Unity to finish importing. Ubiq-Genie will automatically install its dependencies. This may trigger several editor restarts.
 3. Import any Ubiq-Genie sample from **Window → Package Manager → Ubiq-Genie → Samples** and open its scene.
 
 > [!NOTE]
