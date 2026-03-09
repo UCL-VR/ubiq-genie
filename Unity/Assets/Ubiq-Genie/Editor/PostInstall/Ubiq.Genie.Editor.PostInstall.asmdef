@@ -12,7 +12,15 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "UBIQ_GENIE_HAS_UBIQ"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.ucl.ubiq",
+            "expression": "",
+            "define": "UBIQ_GENIE_HAS_UBIQ"
+        }
+    ],
     "noEngineReferences": false
 }
