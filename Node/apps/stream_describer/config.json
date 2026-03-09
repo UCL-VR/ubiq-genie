@@ -32,10 +32,10 @@
       "provider": "fastvlm",
       "model": "llava-fastvithd_1.5b_stage3",
       "python": {
-        "command": "/home/nels/git/ml-fastvlm/.venv/bin/python"
+        "command": ""
       },
       "externalRepo": {
-        "path": "/home/nels/git/ml-fastvlm",
+        "path": "",
         "url": "https://github.com/apple/ml-fastvlm"
       }
     },

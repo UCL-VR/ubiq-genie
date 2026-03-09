@@ -6,20 +6,15 @@ import nconf from 'nconf';
 /**
  * Resolve the PersonaPlex installation directory from config.
  *
- * Checks (in order):
- *   1. `services.audioToAudio.externalRepo.path` (new config structure)
- *   2. `personaplexPath` (legacy config key)
+ * Reads from `services.audioToAudio.externalRepo.path` in config.json.
  */
 function resolvePersonaPlexPath(): string {
-    const fromServices: unknown = nconf.get('services:audioToAudio:externalRepo:path');
-    const configured: unknown = (typeof fromServices === 'string' && fromServices.trim().length > 0)
-        ? fromServices
-        : nconf.get('personaplexPath');
+    const configured: unknown = nconf.get('services:audioToAudio:externalRepo:path');
 
     if (typeof configured !== 'string' || configured.trim().length === 0) {
         throw new Error(
             'PersonaPlex repo path must be set in config.json under ' +
-            'services.audioToAudio.externalRepo.path (or legacy key personaplexPath). ' +
+            'services.audioToAudio.externalRepo.path. ' +
             'Provide the absolute path to the PersonaPlex repository, e.g. "/home/user/personaplex".'
         );
     }
@@ -27,7 +22,7 @@ function resolvePersonaPlexPath(): string {
     const trimmed = configured.trim();
     if (!path.isAbsolute(trimmed)) {
         throw new Error(
-            `personaplexPath must be an absolute path, got: "${trimmed}". ` +
+            `externalRepo.path must be an absolute path, got: "${trimmed}". ` +
             `Example: "/home/user/personaplex"`
         );
     }
@@ -82,7 +77,7 @@ export function createPersonaPlexProvider(options?: PersonaPlexProviderOptions):
                 `Expected '${moshiPackageDir}' to exist.\n` +
                 `Clone the repo:  git clone https://github.com/NVIDIA/personaplex "${personaplexPath}"\n` +
                 `Install it:      pip install "${moshiPackageDir}/."\n` +
-                `Or set "personaplexPath" in your app's config.json.`
+                `Or set "services.audioToAudio.externalRepo.path" in your app's config.json.`
         );
     }
 

@@ -7,8 +7,8 @@ import { KokoroTTSProvider } from './providers/kokoro/provider';
 const SERVICE_CONFIG_KEY = 'textToSpeech';
 
 const providers: ProviderRegistry = {
-    'azure': () => AzureTTSProvider,
-    'kokoro': () => KokoroTTSProvider,
+    'azure': (_config) => AzureTTSProvider,
+    'kokoro': (_config) => KokoroTTSProvider,
 };
 
 export class TextToSpeechService extends ServiceController {

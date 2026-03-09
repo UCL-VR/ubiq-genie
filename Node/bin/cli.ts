@@ -92,7 +92,7 @@ async function runServiceConfiguration() {
         if (serviceConf.python) {
             const currentCommand = serviceConf.python.command ?? '';
             const pythonCommand = await input({
-                message: `Enter the Python command for ${displayName} (absolute path to venv python):`,
+                message: `Enter the Python command for ${displayName} (venv path, conda env, or system command):`,
                 default: currentCommand || undefined,
             });
             if (pythonCommand.trim()) {

@@ -32,10 +32,10 @@
     "audioToAudio": {
       "provider": "personaplex",
       "python": {
-        "command": "/home/nels/git/personaplex/.venv/bin/python"
+        "command": ""
       },
       "externalRepo": {
-        "path": "/home/nels/git/personaplex",
+        "path": "",
         "url": "https://github.com/NVIDIA/personaplex"
       },
       "options": {

@@ -7,8 +7,8 @@ import { NemotronStreamingSTTProvider } from './providers/nemotron_streaming/pro
 const SERVICE_CONFIG_KEY = 'speechToText';
 
 const providers: ProviderRegistry = {
-    'azure': () => AzureSTTProvider,
-    'nemotron-streaming': () => NemotronStreamingSTTProvider,
+    'azure': (_config) => AzureSTTProvider,
+    'nemotron-streaming': (_config) => NemotronStreamingSTTProvider,
 };
 
 class SpeechToTextService extends ServiceController {

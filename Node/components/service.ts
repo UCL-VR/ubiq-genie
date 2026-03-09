@@ -33,7 +33,12 @@ type ServiceState = 'starting' | 'ready' | 'busy' | 'idle' | 'error' | 'stopped'
  * Resolved per-service from the `services.<serviceName>.python` section of config.json.
  */
 interface PythonConfig {
-    /** Absolute path to the Python executable (e.g., "/home/user/.venv/bin/python"). */
+    /**
+     * Python command to use. Can be:
+     * - An absolute path to a venv executable (e.g., "/home/user/.venv/bin/python")
+     * - A conda-run invocation (e.g., "conda run -n myenv python")
+     * - A bare system command (e.g., "python3")
+     */
     command?: string;
 }
 
@@ -321,10 +326,11 @@ class ServiceController extends EventEmitter {
 
         if (packages.length === 0) return;
 
-        const pythonCommand = this.resolveCommand('python');
+        const resolvedPython = this.resolveCommand('python');
+        const { command: pythonCommand, prefixArgs: pythonPrefixArgs } = this.splitCommand(resolvedPython);
 
         // Use pip to check installed packages in one call
-        const result = spawnSync(pythonCommand, ['-m', 'pip', 'show', ...packages], {
+        const result = spawnSync(pythonCommand, [...pythonPrefixArgs, '-m', 'pip', 'show', ...packages], {
             encoding: 'utf-8',
             timeout: 15000,
         });
@@ -333,7 +339,7 @@ class ServiceController extends EventEmitter {
             // Determine which specific packages are missing
             const missing: string[] = [];
             for (const pkg of packages) {
-                const check = spawnSync(pythonCommand, ['-m', 'pip', 'show', pkg], {
+                const check = spawnSync(pythonCommand, [...pythonPrefixArgs, '-m', 'pip', 'show', pkg], {
                     encoding: 'utf-8',
                     timeout: 10000,
                 });
@@ -356,9 +362,11 @@ class ServiceController extends EventEmitter {
      */
     private spawnProviderProcess(identifier: string) {
         const provider = this.provider!;
-        const args =
+        const providerArgs =
             typeof provider.args === 'function' ? provider.args(identifier) : provider.args;
-        const command = this.resolveCommand(provider.command);
+        const resolved = this.resolveCommand(provider.command);
+        const { command, prefixArgs } = this.splitCommand(resolved);
+        const args = [...prefixArgs, ...providerArgs];
 
         const spawnOptions: SpawnOptions | undefined = provider.env
             ? { env: { ...process.env, ...provider.env } }
@@ -382,7 +390,7 @@ class ServiceController extends EventEmitter {
 
         // 1. Provider-level override
         if (this.provider?.pythonCommand) {
-            return this.validatePythonPath(this.provider.pythonCommand);
+            return this.validatePythonCommand(this.provider.pythonCommand);
         }
 
         // 2. Per-service config: services.<key>.python.command
@@ -390,27 +398,38 @@ class ServiceController extends EventEmitter {
             const serviceConf = this.getServiceConfig();
             const perService = serviceConf?.python?.command;
             if (typeof perService === 'string' && perService.trim().length > 0) {
-                return this.validatePythonPath(perService.trim());
+                return this.validatePythonCommand(perService.trim());
             }
         }
 
         // 3. Global config: python.command
         const globalPython = nconf.get('python:command');
         if (typeof globalPython === 'string' && globalPython.trim().length > 0) {
-            return this.validatePythonPath(globalPython.trim());
+            return this.validatePythonCommand(globalPython.trim());
         }
 
         return 'python3';
     }
 
-    private validatePythonPath(pythonPath: string): string {
-        if (!path.isAbsolute(pythonPath)) {
-            throw new Error(
-                `Python command must be an absolute path, got: "${pythonPath}". ` +
-                    `Example: "/home/user/.venv/bin/python"`
-            );
+    /**
+     * Validates that a Python command string is non-empty.
+     * Accepts absolute paths, conda-run invocations, or bare system commands.
+     */
+    private validatePythonCommand(pythonCommand: string): string {
+        if (pythonCommand.length === 0) {
+            throw new Error('Python command must not be empty.');
         }
-        return pythonPath;
+        return pythonCommand;
+    }
+
+    /**
+     * Splits a command string that may contain spaces (e.g., "conda run -n myenv python")
+     * into the executable and prefix arguments. These prefix args are prepended to the
+     * actual process args when spawning.
+     */
+    private splitCommand(commandStr: string): { command: string; prefixArgs: string[] } {
+        const parts = commandStr.split(/\s+/);
+        return { command: parts[0], prefixArgs: parts.slice(1) };
     }
 
     /**

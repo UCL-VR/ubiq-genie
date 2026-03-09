@@ -124,7 +124,7 @@
           "properties": {
             "command": {
               "type": "string",
-              "description": "Absolute path to the Python executable (e.g., '/home/user/.venv/bin/python')."
+              "description": "Python command to use. Can be an absolute path to a venv executable (e.g., '/home/user/.venv/bin/python'), a conda-run invocation (e.g., 'conda run -n myenv python'), or a bare system command (e.g., 'python3')."
             }
           }
         },

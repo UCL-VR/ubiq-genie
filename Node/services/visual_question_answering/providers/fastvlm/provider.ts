@@ -9,20 +9,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /**
  * Resolve the ml-fastvlm repository path from config.
  *
- * Checks (in order):
- *   1. `services.visualQuestionAnswering.externalRepo.path` (new config structure)
- *   2. `fastvlmRepoPath` (legacy config key)
+ * Reads from `services.visualQuestionAnswering.externalRepo.path` in config.json.
  */
 function resolveRepoPath(): string {
-    const fromServices: unknown = nconf.get('services:visualQuestionAnswering:externalRepo:path');
-    const configured: unknown = (typeof fromServices === 'string' && fromServices.trim().length > 0)
-        ? fromServices
-        : nconf.get('fastvlmRepoPath');
+    const configured: unknown = nconf.get('services:visualQuestionAnswering:externalRepo:path');
 
     if (typeof configured !== 'string' || configured.trim().length === 0) {
         throw new Error(
             'ml-fastvlm repo path must be set in config.json under ' +
-            'services.visualQuestionAnswering.externalRepo.path (or legacy key fastvlmRepoPath).\n' +
+            'services.visualQuestionAnswering.externalRepo.path.\n' +
             'Clone: git clone https://github.com/apple/ml-fastvlm\n' +
             'Install: pip install -e /path/to/ml-fastvlm\n' +
             'Download models: cd /path/to/ml-fastvlm && bash get_models.sh'
@@ -32,7 +27,7 @@ function resolveRepoPath(): string {
     const trimmed = configured.trim();
     if (!path.isAbsolute(trimmed)) {
         throw new Error(
-            `fastvlmRepoPath must be an absolute path, got: "${trimmed}". ` +
+            `externalRepo.path must be an absolute path, got: "${trimmed}". ` +
             `Example: "/home/user/ml-fastvlm"`
         );
     }
@@ -43,7 +38,7 @@ function resolveRepoPath(): string {
             `Expected '${path.join(trimmed, 'llava')}' to exist.\n` +
             `Clone the repo:  git clone https://github.com/apple/ml-fastvlm "${trimmed}"\n` +
             `Install it:      pip install -e "${trimmed}"\n` +
-            `Or set "fastvlmRepoPath" in your app's config.json.`
+            `Or set "services.visualQuestionAnswering.externalRepo.path" in your app's config.json.`
         );
     }
 
@@ -80,10 +75,9 @@ export interface FastVLMProviderOptions {
 export function createFastVLMProvider(options?: FastVLMProviderOptions): ServiceProvider {
     const repoPath = resolveRepoPath();
 
-    // Resolve model path: check options, then services config, then legacy config, then default
+    // Resolve model path: check options, then services config, then default
     const modelName = options?.modelPath
         ?? (nconf.get('services:visualQuestionAnswering:model') as string | undefined)
-        ?? (nconf.get('fastvlmModelPath') as string | undefined)
         ?? 'llava-fastvithd_0.5b_stage3';
     const modelPath = path.isAbsolute(modelName)
         ? modelName
