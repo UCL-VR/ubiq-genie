@@ -3,7 +3,7 @@ name: Build UPM branch
 on:
   push:
     branches:
-      - unity-refactor
+      - dev
 
 jobs:
   build-upm:
