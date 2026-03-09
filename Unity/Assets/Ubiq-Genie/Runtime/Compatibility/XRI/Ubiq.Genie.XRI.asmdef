@@ -14,9 +14,15 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
+        "UBIQ_GENIE_HAS_UBIQ",
         "UBIQ_GENIE_XRI"
     ],
     "versionDefines": [
+        {
+            "name": "com.ucl.ubiq",
+            "expression": "",
+            "define": "UBIQ_GENIE_HAS_UBIQ"
+        },
         {
             "name": "com.unity.xr.interaction.toolkit",
             "expression": "",
