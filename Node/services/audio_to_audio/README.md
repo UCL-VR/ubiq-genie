@@ -6,7 +6,7 @@ Manages a child process that ingests raw audio and produces raw audio (and optio
 
 | Provider | Backend | Requirements | Process Mode |
 |----------|---------|-------------|--------------|
-| `personaplex` | NVIDIA PersonaPlex (Moshi) | CUDA GPU, HF_TOKEN, external repo | singleton |
+| `personaplex` | NVIDIA PersonaPlex (Moshi) via [nsalminen/personaplex](https://github.com/nsalminen/personaplex) fork (adds stdio streaming) | CUDA GPU, HF_TOKEN, external repo | singleton |
 
 ## Config-Driven Usage
 
@@ -20,7 +20,7 @@ Manages a child process that ingests raw audio and produces raw audio (and optio
       },
       "externalRepo": {
         "path": "/path/to/personaplex",
-        "url": "https://github.com/NVIDIA/personaplex"
+        "url": "https://github.com/nsalminen/personaplex"
       },
       "options": {
         "voicePrompt": "NATF1.pt",
@@ -59,7 +59,8 @@ Use `encodePacket()` and `LengthPrefixedParser` from `ubiq-genie` for encoding/d
 
 ## Prerequisites
 
-1. Clone: `git clone https://github.com/NVIDIA/personaplex`
+1. Clone the fork with stdio streaming support: `git clone https://github.com/nsalminen/personaplex`
+   (fork of [NVIDIA/personaplex](https://github.com/NVIDIA/personaplex))
 2. Install: `pip install ./personaplex/moshi/.`
 3. Accept the HuggingFace model license and set `HF_TOKEN`
 4. Set the repo path and Python venv in your config.json

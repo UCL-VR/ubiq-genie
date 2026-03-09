@@ -60,7 +60,9 @@ export interface PersonaPlexProviderOptions {
  * pointed at the PersonaPlex installation's `moshi/` package directory.
  *
  * Prerequisites:
- *   - Clone PersonaPlex: `git clone https://github.com/NVIDIA/personaplex ../personaplex`
+ *   - Clone the PersonaPlex fork with stdio support:
+ *     `git clone https://github.com/nsalminen/personaplex ../personaplex`
+ *     (fork of https://github.com/NVIDIA/personaplex with added stdio streaming)
  *   - Install it: `pip install ../personaplex/moshi/.`
  *   - Accept the HF model license and set HF_TOKEN
  *   - CUDA GPU required (or use --cpu-offload)
@@ -75,7 +77,7 @@ export function createPersonaPlexProvider(options?: PersonaPlexProviderOptions):
         throw new Error(
             `PersonaPlex not found at '${personaplexPath}'. ` +
                 `Expected '${moshiPackageDir}' to exist.\n` +
-                `Clone the repo:  git clone https://github.com/NVIDIA/personaplex "${personaplexPath}"\n` +
+                `Clone the repo:  git clone https://github.com/nsalminen/personaplex "${personaplexPath}"\n` +
                 `Install it:      pip install "${moshiPackageDir}/."\n` +
                 `Or set "services.audioToAudio.externalRepo.path" in your app's config.json.`
         );

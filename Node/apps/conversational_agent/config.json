@@ -36,7 +36,7 @@
       },
       "externalRepo": {
         "path": "",
-        "url": "https://github.com/NVIDIA/personaplex"
+        "url": "https://github.com/nsalminen/personaplex"
       },
       "options": {
         "voicePrompt": "NATF1.pt",
