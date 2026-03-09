@@ -1,7 +1,7 @@
 {
   "$schema": "../../config.schema.json",
   "name": "BaseApp",
-  "roomGuid": "6765c52b-3ad6-4fb0-9030-2c9a05dc4731",
+  "roomGuid": "3cdcb02a-745f-41a9-ab79-da3b48d9434d",
   "roomserver": {
     "joinExisting": true,
     "uri": "localhost",

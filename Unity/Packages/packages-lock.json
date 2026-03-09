@@ -11,6 +11,12 @@
       },
       "hash": "93e45c0eb2bbcd9d07441b3aa32d1ef6231e4be9"
     },
+    "com.ucl.ubiq-genie": {
+      "version": "file:../Assets/Ubiq-Genie",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.unity.burst": {
       "version": "1.8.27",
       "depth": 0,

@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Apps/ConversationalAgent/ConversationalAgent.unity
+    path: Assets/Ubiq-Genie/Apps/ConversationalAgent/ConversationalAgent.unity
     guid: fc8a1dcbce81745e4a89099ef69bbd81
   m_configObjects:
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: c082a6e06a04344d899eb5102c1f8fd3, type: 2}

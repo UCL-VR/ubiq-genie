@@ -30,7 +30,7 @@ If you need to reconfigure the application, you can run `npm start transcription
 
 ### Client (Unity)
 
-1. Launch Unity and navigate to the `Unity/Assets/Apps/Transcription` directory. Open the `Transcription.unity` scene.
+1. In Unity, open the `Transcription.unity` scene. If you installed the package via git URL (UPM), you first need to import the **Transcription** sample from **Window → Package Manager → Ubiq-Genie → Samples**.
 2. Ensure the `Room Client` under the `Network Scene` object has the correct IP address and port for the server. If the server is running on the same machine as the Unity Editor, the IP address should be `localhost`. This should correspond to the configuration on the server side.
 3. In the Unity Editor, press the `Play` button to launch the application.
 4. Speak into the microphone. The speech of every user will be recorded and saved to a .wav file and transcriptions are stored in a .csv file, both located in the `Node/samples/apps/transcription/recordings` directory by default.
