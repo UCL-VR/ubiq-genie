@@ -15,10 +15,7 @@
       "version": "file:../Assets/Ubiq-Genie",
       "depth": 0,
       "source": "local",
-      "dependencies": {
-        "com.ucl.ubiq": "1.0.0-pre.16",
-        "com.unity.webrtc-ubiq-fork": "3.0.1-pre.7"
-      }
+      "dependencies": {}
     },
     "com.unity.burst": {
       "version": "1.8.27",

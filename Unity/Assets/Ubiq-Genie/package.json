@@ -7,8 +7,9 @@
     "license": "Apache-2.0",
     "dependencies": {},
     "author": {
-        "name": "Virtual Environments and Computer Graphics Group, University College London",
-        "url": "https://github.com/UCL-VR/ubiq-genie"
+        "name": "UCL Immersive Virtual Environments Laboratory",
+        "email": "ubiq@cs.ucl.ac.uk",
+        "url": "https://vr.cs.ucl.ac.uk/"
     },
     "samples": [
         {
