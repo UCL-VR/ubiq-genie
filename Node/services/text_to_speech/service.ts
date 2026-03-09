@@ -1,10 +1,19 @@
 import { ServiceController } from '../../components/service';
-import type { ServiceProvider } from '../../components/service';
+import type { ServiceProvider, ProviderRegistry } from '../../components/service';
 import { NetworkScene } from 'ubiq-server/ubiq';
 import { AzureTTSProvider } from './providers/azure/provider';
+import { KokoroTTSProvider } from './providers/kokoro/provider';
+
+const SERVICE_CONFIG_KEY = 'textToSpeech';
+
+const providers: ProviderRegistry = {
+    'azure': (_config) => AzureTTSProvider,
+    'kokoro': (_config) => KokoroTTSProvider,
+};
 
 export class TextToSpeechService extends ServiceController {
-    constructor(scene: NetworkScene, provider: ServiceProvider = AzureTTSProvider) {
-        super(scene, 'TextToSpeechService', provider);
+    constructor(scene: NetworkScene, provider?: ServiceProvider) {
+        const resolvedProvider = provider ?? ServiceController.resolveProvider(SERVICE_CONFIG_KEY, providers, AzureTTSProvider);
+        super(scene, 'TextToSpeechService', resolvedProvider, SERVICE_CONFIG_KEY);
     }
 }

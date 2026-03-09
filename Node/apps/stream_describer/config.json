@@ -1,4 +1,5 @@
 {
+  "$schema": "../../config.schema.json",
   "name": "StreamDescriber",
   "roomGuid": "c69a7f14-5cb0-4356-89e2-8c1e0e15be2f",
   "roomserver": {
@@ -24,10 +25,23 @@
       "uri": "stun:stun.l.google.com:19302"
     }
   ],
-  "fastvlmRepoPath": "/home/nels/git/ml-fastvlm",
-  "fastvlmModelPath": "/home/nels/git/ml-fastvlm/checkpoints/llava-fastvithd_1.5b_stage3",
-  "pythonCommand": "/home/nels/git/ml-fastvlm/.venv/bin/python",
   "prompt": "<image>\nProvide a caption of this image. Be very concise and use at most one sentence. Do not mention it is a video game.\n",
   "tts": true,
+  "services": {
+    "visualQuestionAnswering": {
+      "provider": "fastvlm",
+      "model": "llava-fastvithd_1.5b_stage3",
+      "python": {
+        "command": ""
+      },
+      "externalRepo": {
+        "path": "",
+        "url": "https://github.com/apple/ml-fastvlm"
+      }
+    },
+    "textToSpeech": {
+      "provider": "kokoro"
+    }
+  },
   "configurationComplete": false
 }

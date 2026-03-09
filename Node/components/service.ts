@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { spawn, spawnSync, ChildProcess, SpawnOptions } from 'child_process';
+import { spawn, spawnSync, execSync, ChildProcess, SpawnOptions } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { NetworkScene } from 'ubiq-server/ubiq';
@@ -14,6 +14,62 @@ import nconf from 'nconf';
  * - 'lazy-singleton': A single child process spawned when the first peer joins, killed when all peers leave.
  */
 type ProcessMode = 'per-peer' | 'singleton' | 'lazy-singleton';
+
+/**
+ * Standardized service lifecycle states.
+ *
+ * Child processes signal state transitions via stdout markers:
+ *   >READY  — the backend has finished loading and is ready to accept input
+ *   >BUSY   — the backend is processing a request
+ *   >IDLE   — the backend has finished processing and is ready for the next request
+ *
+ * These markers are intentionally plain text so that any language (Python, Node, C++, etc.)
+ * can trivially emit them to stdout.
+ */
+type ServiceState = 'starting' | 'ready' | 'busy' | 'idle' | 'error' | 'stopped';
+
+/**
+ * Configuration for the Python environment used by a service.
+ * Resolved per-service from the `services.<serviceName>.python` section of config.json.
+ */
+interface PythonConfig {
+    /**
+     * Python command to use. Can be:
+     * - An absolute path to a venv executable (e.g., "/home/user/.venv/bin/python")
+     * - A conda-run invocation (e.g., "conda run -n myenv python")
+     * - A bare system command (e.g., "python3")
+     */
+    command?: string;
+}
+
+/**
+ * Configuration for an external repository dependency used by a provider.
+ * Resolved per-service from the `services.<serviceName>.externalRepo` section of config.json.
+ */
+interface ExternalRepoConfig {
+    /** Absolute path to the cloned repository on disk. */
+    path?: string;
+    /** Git clone URL of the repository. */
+    url?: string;
+    /** Known-good commit hash that this app was tested against. */
+    commit?: string;
+}
+
+/**
+ * Per-service configuration block from config.json under `services.<serviceName>`.
+ */
+interface ServiceConfig {
+    /** Provider name to auto-resolve (e.g., 'llama-cpp', 'azure', 'kokoro'). */
+    provider?: string;
+    /** Model name or path. Can be a HuggingFace ID, an absolute file path, or a relative checkpoint name. */
+    model?: string;
+    /** Python environment configuration for this service. */
+    python?: PythonConfig;
+    /** External repository this service depends on. */
+    externalRepo?: ExternalRepoConfig;
+    /** Provider-specific options (passed through to the provider factory). */
+    options?: Record<string, unknown>;
+}
 
 /**
  * Lightweight configuration object that defines how a service backend is run.
@@ -37,29 +93,41 @@ interface ServiceProvider {
     env?: Record<string, string>;
     /** Optional path to a requirements.txt file for Python dependency checking */
     requirements?: string;
+    /** Optional Python command override specific to this provider */
+    pythonCommand?: string;
 }
+
+/**
+ * A mapping from provider name to a factory function that creates a ServiceProvider.
+ * Used by `resolveProvider()` to allow config-only provider selection.
+ */
+type ProviderRegistry = Record<string, (config: ServiceConfig) => ServiceProvider>;
 
 class ServiceController extends EventEmitter {
     name: string;
-    config: any;
     roomClient: RoomClient;
     childProcesses: { [identifier: string]: ChildProcess };
     provider?: ServiceProvider;
 
-    /**
-     * Constructor for the Service class.
-     *
-     * @constructor
-     * @param {NetworkScene} scene - The NetworkScene in which the service should be registered.
-     * @param {string} name - The name of the service.
-     * @param {object} config - An object containing configuration information for the service.
-     */
-    constructor(scene: NetworkScene, name: string, provider?: ServiceProvider) {
+    /** The config key used to look up this service's settings under `services.<key>`. */
+    serviceConfigKey?: string;
+
+    /** Per-process state tracking. Key is the process identifier. */
+    private processStates: { [identifier: string]: ServiceState } = {};
+
+    /** Pending stdout data per process for line-based marker detection. */
+    private stdoutBuffers: { [identifier: string]: string } = {};
+
+    /** Resolvers for waitForReady() promises. */
+    private readyResolvers: { [identifier: string]: Array<() => void> } = {};
+
+    constructor(scene: NetworkScene, name: string, provider?: ServiceProvider, serviceConfigKey?: string) {
         super();
         this.name = name;
         this.roomClient = scene.getComponent('RoomClient') as RoomClient;
         this.childProcesses = {};
         this.provider = provider;
+        this.serviceConfigKey = serviceConfigKey;
 
         // Listen for process exit events and ensure child processes are killed
         process.on('exit', () => this.killAllChildProcesses());
@@ -72,11 +140,146 @@ class ServiceController extends EventEmitter {
             process.exit();
         });
 
+        // Check external repo commit hash if configured
+        if (this.serviceConfigKey) {
+            this.verifyExternalRepoCommit();
+        }
+
         // If a provider is given, automatically set up child process lifecycle
         if (provider) {
             this.initializeProvider(provider);
         }
     }
+
+    // --- Service state management ---
+
+    /**
+     * Returns the current state for a process identifier.
+     * For singleton/lazy-singleton modes, use 'default' as the identifier.
+     */
+    getState(identifier: string = 'default'): ServiceState {
+        return this.processStates[identifier] ?? 'stopped';
+    }
+
+    /**
+     * Convenience getter for the default process state (singleton modes).
+     */
+    get state(): ServiceState {
+        return this.getState('default');
+    }
+
+    /**
+     * Returns a promise that resolves when the specified process emits >READY.
+     * Resolves immediately if the process is already in 'ready' or 'idle' state.
+     */
+    waitForReady(identifier: string = 'default'): Promise<void> {
+        const currentState = this.getState(identifier);
+        if (currentState === 'ready' || currentState === 'idle') {
+            return Promise.resolve();
+        }
+        return new Promise<void>((resolve) => {
+            if (!this.readyResolvers[identifier]) {
+                this.readyResolvers[identifier] = [];
+            }
+            this.readyResolvers[identifier].push(resolve);
+        });
+    }
+
+    private setState(identifier: string, state: ServiceState) {
+        const previous = this.processStates[identifier];
+        if (previous === state) return;
+        this.processStates[identifier] = state;
+        this.emit('stateChange', state, identifier, previous);
+
+        // Resolve pending waitForReady promises
+        if ((state === 'ready' || state === 'idle') && this.readyResolvers[identifier]) {
+            for (const resolve of this.readyResolvers[identifier]) {
+                resolve();
+            }
+            delete this.readyResolvers[identifier];
+        }
+    }
+
+    // --- External repo commit hash verification ---
+
+    private verifyExternalRepoCommit() {
+        const serviceConf = this.getServiceConfig();
+        if (!serviceConf?.externalRepo) return;
+
+        const { path: repoPath, commit: expectedCommit, url } = serviceConf.externalRepo;
+        if (!repoPath || !expectedCommit) return;
+
+        if (!existsSync(repoPath)) {
+            this.log(
+                `External repo not found at '${repoPath}'.` +
+                    (url ? ` Clone it with: git clone ${url} "${repoPath}"` : ''),
+                'warning'
+            );
+            return;
+        }
+
+        try {
+            const actualCommit = execSync('git rev-parse HEAD', {
+                cwd: repoPath,
+                encoding: 'utf-8',
+                timeout: 5000,
+            }).trim();
+
+            if (actualCommit !== expectedCommit) {
+                this.log(
+                    `External repo at '${repoPath}' is at commit ${actualCommit.slice(0, 12)} ` +
+                        `but config expects ${expectedCommit.slice(0, 12)}. ` +
+                        `If the application works correctly, update the commit hash in config.json ` +
+                        `under services.${this.serviceConfigKey}.externalRepo.commit`,
+                    'warning'
+                );
+            }
+        } catch {
+            // Not a git repo or git not available — skip silently
+        }
+    }
+
+    // --- Config helpers ---
+
+    /**
+     * Returns the per-service config block from `services.<serviceConfigKey>` in config.json.
+     * Returns undefined if no serviceConfigKey is set or the config section doesn't exist.
+     */
+    getServiceConfig(): ServiceConfig | undefined {
+        if (!this.serviceConfigKey) return undefined;
+        return nconf.get(`services:${this.serviceConfigKey}`) as ServiceConfig | undefined;
+    }
+
+    /**
+     * Resolves a provider from the config-based registry.
+     *
+     * Reads `services.<serviceConfigKey>.provider` from config.json, looks it up
+     * in the provided registry, and calls the factory with the service config.
+     * Falls back to `defaultProvider` if no config is set or the provider name
+     * is not found in the registry.
+     */
+    static resolveProvider(
+        serviceConfigKey: string,
+        registry: ProviderRegistry,
+        defaultProvider: ServiceProvider
+    ): ServiceProvider {
+        const serviceConf = nconf.get(`services:${serviceConfigKey}`) as ServiceConfig | undefined;
+        if (!serviceConf?.provider) return defaultProvider;
+
+        const factory = registry[serviceConf.provider];
+        if (!factory) {
+            Logger.log(
+                'ServiceController',
+                `Unknown provider '${serviceConf.provider}' for service '${serviceConfigKey}'. ` +
+                    `Available: ${Object.keys(registry).join(', ')}. Using default.`,
+                'warning'
+            );
+            return defaultProvider;
+        }
+        return factory(serviceConf);
+    }
+
+    // --- Provider lifecycle ---
 
     /**
      * Sets up child process lifecycle management based on the provider's processMode.
@@ -123,10 +326,11 @@ class ServiceController extends EventEmitter {
 
         if (packages.length === 0) return;
 
-        const pythonCommand = this.resolveCommand('python');
+        const resolvedPython = this.resolveCommand('python');
+        const { command: pythonCommand, prefixArgs: pythonPrefixArgs } = this.splitCommand(resolvedPython);
 
         // Use pip to check installed packages in one call
-        const result = spawnSync(pythonCommand, ['-m', 'pip', 'show', ...packages], {
+        const result = spawnSync(pythonCommand, [...pythonPrefixArgs, '-m', 'pip', 'show', ...packages], {
             encoding: 'utf-8',
             timeout: 15000,
         });
@@ -135,7 +339,7 @@ class ServiceController extends EventEmitter {
             // Determine which specific packages are missing
             const missing: string[] = [];
             for (const pkg of packages) {
-                const check = spawnSync(pythonCommand, ['-m', 'pip', 'show', pkg], {
+                const check = spawnSync(pythonCommand, [...pythonPrefixArgs, '-m', 'pip', 'show', pkg], {
                     encoding: 'utf-8',
                     timeout: 10000,
                 });
@@ -158,37 +362,74 @@ class ServiceController extends EventEmitter {
      */
     private spawnProviderProcess(identifier: string) {
         const provider = this.provider!;
-        const args =
+        const providerArgs =
             typeof provider.args === 'function' ? provider.args(identifier) : provider.args;
-        const command = this.resolveCommand(provider.command);
+        const resolved = this.resolveCommand(provider.command);
+        const { command, prefixArgs } = this.splitCommand(resolved);
+        const args = [...prefixArgs, ...providerArgs];
 
         const spawnOptions: SpawnOptions | undefined = provider.env
             ? { env: { ...process.env, ...provider.env } }
             : undefined;
 
+        this.setState(identifier, 'starting');
         this.registerChildProcess(identifier, command, args, spawnOptions);
     }
 
+    /**
+     * Resolves the command to execute. For Python commands, checks (in order):
+     *   1. provider.pythonCommand (provider-level override)
+     *   2. services.<serviceConfigKey>.python.command (per-service config)
+     *   3. python.command (global config)
+     *   4. 'python3' (system default)
+     */
     private resolveCommand(command: string): string {
         if (command !== 'python') {
             return command;
         }
 
-        // Check both pythonCommand and pythonPath (alias) from config
-        const configuredPython =
-            nconf.get('pythonCommand') ?? nconf.get('pythonPath');
-        if (typeof configuredPython === 'string' && configuredPython.trim().length > 0) {
-            const trimmed = configuredPython.trim();
-            if (!path.isAbsolute(trimmed)) {
-                throw new Error(
-                    `pythonCommand/pythonPath must be an absolute path, got: "${trimmed}". ` +
-                    `Example: "/home/user/.venv/bin/python"`
-                );
+        // 1. Provider-level override
+        if (this.provider?.pythonCommand) {
+            return this.validatePythonCommand(this.provider.pythonCommand);
+        }
+
+        // 2. Per-service config: services.<key>.python.command
+        if (this.serviceConfigKey) {
+            const serviceConf = this.getServiceConfig();
+            const perService = serviceConf?.python?.command;
+            if (typeof perService === 'string' && perService.trim().length > 0) {
+                return this.validatePythonCommand(perService.trim());
             }
-            return trimmed;
+        }
+
+        // 3. Global config: python.command
+        const globalPython = nconf.get('python:command');
+        if (typeof globalPython === 'string' && globalPython.trim().length > 0) {
+            return this.validatePythonCommand(globalPython.trim());
         }
 
         return 'python3';
+    }
+
+    /**
+     * Validates that a Python command string is non-empty.
+     * Accepts absolute paths, conda-run invocations, or bare system commands.
+     */
+    private validatePythonCommand(pythonCommand: string): string {
+        if (pythonCommand.length === 0) {
+            throw new Error('Python command must not be empty.');
+        }
+        return pythonCommand;
+    }
+
+    /**
+     * Splits a command string that may contain spaces (e.g., "conda run -n myenv python")
+     * into the executable and prefix arguments. These prefix args are prepended to the
+     * actual process args when spawning.
+     */
+    private splitCommand(commandStr: string): { command: string; prefixArgs: string[] } {
+        const parts = commandStr.split(/\s+/);
+        return { command: parts[0], prefixArgs: parts.slice(1) };
     }
 
     /**
@@ -226,16 +467,50 @@ class ServiceController extends EventEmitter {
         });
     }
 
+    // --- stdout marker detection ---
+
     /**
-     * Method to register a child process. This method registers the child process with the existing OnResponse and OnError callbacks.
+     * Scans stdout data for state markers (>READY, >BUSY, >IDLE) and updates
+     * the process state accordingly. Markers are stripped from the data before
+     * being emitted to consumers.
      *
-     * @memberof Service
-     * @instance
-     * @param {string} identifier - The identifier for the child process. This should be unique for each child process.
-     * @param {string} command - The command to execute. E.g. "python".
-     * @param {Array<string>} options - The options to pass to the command.
-     * @throws {Error} If identifier is undefined or if the child process fails to spawn.
-     * @returns {ChildProcess} The spawned child process.
+     * Returns the data with marker lines removed.
+     */
+    private processStdoutMarkers(data: Buffer, identifier: string): Buffer {
+        const text = data.toString();
+        this.stdoutBuffers[identifier] = (this.stdoutBuffers[identifier] ?? '') + text;
+
+        const lines = this.stdoutBuffers[identifier].split('\n');
+        // Keep the last incomplete line in the buffer
+        this.stdoutBuffers[identifier] = lines.pop() ?? '';
+
+        const outputLines: string[] = [];
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed === '>READY') {
+                this.setState(identifier, 'ready');
+            } else if (trimmed === '>BUSY') {
+                this.setState(identifier, 'busy');
+            } else if (trimmed === '>IDLE') {
+                this.setState(identifier, 'idle');
+            } else {
+                outputLines.push(line);
+            }
+        }
+
+        // Reconstruct the buffer without marker lines
+        const filtered = outputLines.join('\n');
+        // Add newline back if there was content (to match original stream behavior)
+        if (filtered.length > 0) {
+            return Buffer.from(filtered + '\n');
+        }
+        return Buffer.alloc(0);
+    }
+
+    /**
+     * Registers a child process and sets up stdout/stderr event handlers.
+     * State markers (>READY, >BUSY, >IDLE) in stdout are automatically detected
+     * and update the service state. They are stripped before being emitted as 'data' events.
      */
     registerChildProcess(
         identifier: string,
@@ -255,13 +530,19 @@ class ServiceController extends EventEmitter {
                 ? spawn(command, args, spawnOptions)
                 : spawn(command, args);
         } catch (e) {
+            this.setState(identifier, 'error');
             throw new Error(`Failed to spawn child process for service: ${this.name}. Error: ${e}`);
         }
 
         // Register events for the child process.
         const childProcess = this.childProcesses[identifier];
         if (childProcess && childProcess.stdout && childProcess.stderr) {
-            childProcess.stdout.on('data', (data) => this.emit('data', data, identifier));
+            childProcess.stdout.on('data', (data: Buffer) => {
+                const filtered = this.processStdoutMarkers(data, identifier);
+                if (filtered.length > 0) {
+                    this.emit('data', filtered, identifier);
+                }
+            });
             childProcess.stderr.on('data', (data) => {
                 const message = data.toString().trim();
                 if (message) {
@@ -269,10 +550,14 @@ class ServiceController extends EventEmitter {
                 }
             });
             childProcess.on('close', (code, signal) => {
+                this.setState(identifier, 'stopped');
                 delete this.childProcesses[identifier];
+                delete this.processStates[identifier];
+                delete this.stdoutBuffers[identifier];
                 this.emit('close', code, signal, identifier);
             });
             childProcess.on('error', (err) => {
+                this.setState(identifier, 'error');
                 delete this.childProcesses[identifier];
                 this.log(`Failed to start child process ${identifier}: ${err.message}`, 'error');
                 this.emit('close', -1, 'ERROR', identifier);
@@ -293,6 +578,7 @@ class ServiceController extends EventEmitter {
 
         // Check if the child process has already been closed.
         if (this.childProcesses[identifier].killed) {
+            this.setState(identifier, 'stopped');
             delete this.childProcesses[identifier];
             this.emit('close', 0, 'SIGTERM', identifier);
         }
@@ -303,9 +589,6 @@ class ServiceController extends EventEmitter {
 
     /**
      * Logs a message to the console with the service name.
-     *
-     * @memberof ServiceController
-     * @param {string} message - The message to log.
      */
     log(message: string, level: 'info' | 'warning' | 'error' = 'info', end: string = '\n'): void {
         Logger.log(this.name, message, level, end, '\x1b[35m');
@@ -314,12 +597,8 @@ class ServiceController extends EventEmitter {
     /**
      * Sends data to a child process with the specified identifier.
      *
-     * @memberof Service
-     * @param {string} identifier - The identifier of the child process to send the data to.
-     * @param {string | Buffer} data - The data to send to the child process.
-     * @returns {boolean | undefined} `true` if the data was flushed, `false` if it was
-     *   buffered internally (backpressure), or `undefined` if the write could not be
-     *   performed at all.
+     * @returns `true` if the data was flushed, `false` if it was buffered internally
+     *   (backpressure), or `undefined` if the write could not be performed.
      */
     sendToChildProcess(identifier: string, data: string | Buffer): boolean | undefined {
         const child = this.childProcesses[identifier];
@@ -337,11 +616,7 @@ class ServiceController extends EventEmitter {
     }
 
     /**
-     * Method to kill a specific child process.
-     *
-     * @memberof Service
-     * @param {string} identifier - The identifier for the child process to kill.
-     * @instance
+     * Kills a specific child process.
      */
     killChildProcess(identifier: string) {
         if (this.childProcesses[identifier] === undefined) {
@@ -349,22 +624,21 @@ class ServiceController extends EventEmitter {
         }
 
         this.childProcesses[identifier].kill();
+        this.setState(identifier, 'stopped');
         delete this.childProcesses[identifier];
     }
 
     /**
-     * Method to kill all child processes.
-     *
-     * @memberof Service
-     * @instance
+     * Kills all child processes.
      */
     killAllChildProcesses() {
         this.log('Killing all child processes');
-        for (const childProcess of Object.values(this.childProcesses)) {
+        for (const [identifier, childProcess] of Object.entries(this.childProcesses)) {
             childProcess.kill();
+            this.setState(identifier, 'stopped');
         }
     }
 }
 
 export { ServiceController };
-export type { ServiceProvider, ProcessMode };
+export type { ServiceProvider, ProcessMode, ServiceState, ServiceConfig, ExternalRepoConfig, PythonConfig, ProviderRegistry };

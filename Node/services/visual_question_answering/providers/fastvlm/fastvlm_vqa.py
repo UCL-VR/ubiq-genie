@@ -205,6 +205,10 @@ def main():
                 break
 
             image = i420_to_rgb_image(frame_data, width, height)
+
+            sys.stdout.write(">BUSY\n")
+            sys.stdout.flush()
+
             response = process_frame(
                 image,
                 prompt,
@@ -219,6 +223,9 @@ def main():
 
             result = json.dumps({"description": response})
             sys.stdout.write(result + "\n")
+            sys.stdout.flush()
+
+            sys.stdout.write(">IDLE\n")
             sys.stdout.flush()
 
         except json.JSONDecodeError as e:

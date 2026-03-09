@@ -9,15 +9,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /**
  * Resolve the ml-fastvlm repository path from config.
  *
- * The `fastvlmRepoPath` key in config.json must be an absolute path pointing
- * to the cloned ml-fastvlm repository. The directory must contain `llava/`.
+ * Reads from `services.visualQuestionAnswering.externalRepo.path` in config.json.
  */
 function resolveRepoPath(): string {
-    const configured: unknown = nconf.get('fastvlmRepoPath');
+    const configured: unknown = nconf.get('services:visualQuestionAnswering:externalRepo:path');
+
     if (typeof configured !== 'string' || configured.trim().length === 0) {
         throw new Error(
-            'fastvlmRepoPath must be set in config.json. ' +
-            'Provide the absolute path to the ml-fastvlm repository.\n' +
+            'ml-fastvlm repo path must be set in config.json under ' +
+            'services.visualQuestionAnswering.externalRepo.path.\n' +
             'Clone: git clone https://github.com/apple/ml-fastvlm\n' +
             'Install: pip install -e /path/to/ml-fastvlm\n' +
             'Download models: cd /path/to/ml-fastvlm && bash get_models.sh'
@@ -27,7 +27,7 @@ function resolveRepoPath(): string {
     const trimmed = configured.trim();
     if (!path.isAbsolute(trimmed)) {
         throw new Error(
-            `fastvlmRepoPath must be an absolute path, got: "${trimmed}". ` +
+            `externalRepo.path must be an absolute path, got: "${trimmed}". ` +
             `Example: "/home/user/ml-fastvlm"`
         );
     }
@@ -38,7 +38,7 @@ function resolveRepoPath(): string {
             `Expected '${path.join(trimmed, 'llava')}' to exist.\n` +
             `Clone the repo:  git clone https://github.com/apple/ml-fastvlm "${trimmed}"\n` +
             `Install it:      pip install -e "${trimmed}"\n` +
-            `Or set "fastvlmRepoPath" in your app's config.json.`
+            `Or set "services.visualQuestionAnswering.externalRepo.path" in your app's config.json.`
         );
     }
 
@@ -68,16 +68,17 @@ export interface FastVLMProviderOptions {
  *   - Clone: git clone https://github.com/apple/ml-fastvlm
  *   - Install: pip install -e /path/to/ml-fastvlm
  *   - Download checkpoints: cd /path/to/ml-fastvlm && bash get_models.sh
- *   - Set "fastvlmRepoPath" in your app's config.json
+ *   - Set repo path in config.json under services.visualQuestionAnswering.externalRepo.path
  *
  * @param options - Model and generation overrides.
  */
 export function createFastVLMProvider(options?: FastVLMProviderOptions): ServiceProvider {
     const repoPath = resolveRepoPath();
 
-    // Resolve model path: absolute paths pass through; relative names are
-    // resolved under {repoPath}/checkpoints/.
-    const modelName = options?.modelPath ?? 'llava-fastvithd_0.5b_stage3';
+    // Resolve model path: check options, then services config, then default
+    const modelName = options?.modelPath
+        ?? (nconf.get('services:visualQuestionAnswering:model') as string | undefined)
+        ?? 'llava-fastvithd_0.5b_stage3';
     const modelPath = path.isAbsolute(modelName)
         ? modelName
         : path.join(repoPath, 'checkpoints', modelName);

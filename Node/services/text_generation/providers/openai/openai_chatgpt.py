@@ -18,6 +18,9 @@ def listen_for_messages(args):
         {"role": "system", "content": args.preprompt}
     ]
 
+    print(">READY")
+    sys.stdout.flush()
+
     while True:
         try:
             line = sys.stdin.buffer.readline()
@@ -26,8 +29,12 @@ def listen_for_messages(args):
             message_log.append(
                 {"role": "user", "content": line.decode("utf-8").strip() + args.prompt_suffix}
             )
+            print(">BUSY")
+            sys.stdout.flush()
             message_log = request_response(message_log)
             print(">" + message_log[-1]["content"])
+            print(">IDLE")
+            sys.stdout.flush()
         except KeyboardInterrupt:
             break
 

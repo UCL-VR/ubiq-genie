@@ -1,4 +1,5 @@
 {
+  "$schema": "../../config.schema.json",
   "name": "BaseApp",
   "roomGuid": "3cdcb02a-745f-41a9-ab79-da3b48d9434d",
   "roomserver": {

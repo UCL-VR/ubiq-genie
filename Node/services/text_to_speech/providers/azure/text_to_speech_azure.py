@@ -33,11 +33,20 @@ def transcribe_speech(text, speech_synthesizer):
 def main():
     speech_synthesizer = initialize_speech_synthesizer()
 
+    sys.stdout.write(">READY\n")
+    sys.stdout.flush()
+
     while True:
         try:
             text = input()
             if text.strip():
+                sys.stdout.write(">BUSY\n")
+                sys.stdout.flush()
+
                 transcribe_speech(text, speech_synthesizer)
+
+                sys.stdout.write(">IDLE\n")
+                sys.stdout.flush()
         except KeyboardInterrupt:
             print("Speech synthesis stopped.")
             break

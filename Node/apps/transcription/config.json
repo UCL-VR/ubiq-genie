@@ -1,4 +1,5 @@
 {
+  "$schema": "../../config.schema.json",
   "name": "Transcription",
   "roomGuid": "a55fa6d3-08ee-4bcc-a5de-2f7b0311bd44",
   "roomserver": {

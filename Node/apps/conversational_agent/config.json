@@ -1,4 +1,5 @@
 {
+  "$schema": "../../config.schema.json",
   "name": "Virtual Assistant",
   "roomGuid": "452dbb15-1985-45b1-9b26-507026655332",
   "roomserver": {
@@ -27,12 +28,22 @@
   "preprompt": "You are a participant in a multi-party conversation. Your name is Agent. Every response should be prefixed with the speaker’s name, an arrow, the person who is spoken to and a double colon (e.g., 'Dizzy Falcon -> Agent:: …’). Only address one person at a time, so there can only be one name after the arrow. You can only speak from the Agent’s perspective, so your response always starts with 'Agent ->'. Wait for someone to start speaking. Do not speak for others, only from the perspective of yourself: Agent. When asking someone a specific a question start with 'Agent -> '. Respond as concisely as possible, with at most three sentences.",
   "prompt_suffix": " Remember that every response should be prefixed with the speaker’s name, an arrow, the person who is spoken to and a double colon (e.g., 'Agent -> Blue Hawk:: …’). Your name is Agent, so your responses always start with 'Agent -> '",
   "useAudioToAudio": true,
-  "pythonCommand": "/home/nels/git/personaplex/.venv/bin/python",
-  "personaplexPath": "/home/nels/git/personaplex",
-  "personaplex": {
-    "voicePrompt": "NATF1.pt",
-    "textPrompt": "Your name is Janet. You are a friendly person, eager to help and chat with others. Your responses are short.",
-    "device": "cuda"
+  "services": {
+    "audioToAudio": {
+      "provider": "personaplex",
+      "python": {
+        "command": ""
+      },
+      "externalRepo": {
+        "path": "",
+        "url": "https://github.com/nsalminen/personaplex"
+      },
+      "options": {
+        "voicePrompt": "NATF1.pt",
+        "textPrompt": "Your name is Janet. You are a friendly person, eager to help and chat with others. Your responses are short.",
+        "device": "cuda"
+      }
+    }
   },
   "configurationComplete": false
 }
