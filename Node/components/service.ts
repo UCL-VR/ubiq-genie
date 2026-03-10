@@ -115,8 +115,8 @@ class ServiceController extends EventEmitter {
     /** Per-process state tracking. Key is the process identifier. */
     private processStates: { [identifier: string]: ServiceState } = {};
 
-    /** Pending stdout data per process for line-based marker detection. */
-    private stdoutBuffers: { [identifier: string]: string } = {};
+    /** Pending stdout data per process for binary-safe marker detection. */
+    private stdoutBuffers: { [identifier: string]: Buffer } = {};
 
     /** Resolvers for waitForReady() promises. */
     private readyResolvers: { [identifier: string]: Array<() => void> } = {};
@@ -467,44 +467,76 @@ class ServiceController extends EventEmitter {
         });
     }
 
-    // --- stdout marker detection ---
+    // --- stdout marker detection (binary-safe) ---
+
+    // Pre-computed marker byte sequences for binary comparison.
+    private static readonly MARKER_READY = Buffer.from('>READY');
+    private static readonly MARKER_BUSY  = Buffer.from('>BUSY');
+    private static readonly MARKER_IDLE  = Buffer.from('>IDLE');
+
+    /**
+     * Checks whether a raw byte slice (after trimming ASCII whitespace)
+     * exactly matches the given marker bytes. Operates entirely on Buffers
+     * so that binary data is never run through a lossy text encoding.
+     */
+    private static matchesMarker(buf: Buffer, start: number, end: number, marker: Buffer): boolean {
+        // Trim leading ASCII whitespace (space 0x20, tab 0x09, CR 0x0D)
+        while (start < end && (buf[start] === 0x20 || buf[start] === 0x09 || buf[start] === 0x0D)) start++;
+        // Trim trailing ASCII whitespace
+        while (end > start && (buf[end - 1] === 0x20 || buf[end - 1] === 0x09 || buf[end - 1] === 0x0D)) end--;
+        const len = end - start;
+        if (len !== marker.length) return false;
+        for (let i = 0; i < len; i++) {
+            if (buf[start + i] !== marker[i]) return false;
+        }
+        return true;
+    }
 
     /**
      * Scans stdout data for state markers (>READY, >BUSY, >IDLE) and updates
      * the process state accordingly. Markers are stripped from the data before
      * being emitted to consumers.
      *
+     * All operations stay in Buffer space — binary data (e.g., raw PCM audio)
+     * is never converted through a lossy text encoding round-trip.
+     *
      * Returns the data with marker lines removed.
      */
     private processStdoutMarkers(data: Buffer, identifier: string): Buffer {
-        const text = data.toString();
-        this.stdoutBuffers[identifier] = (this.stdoutBuffers[identifier] ?? '') + text;
+        // Prepend any leftover bytes from the previous data event
+        const pending = this.stdoutBuffers[identifier];
+        const buf = pending && pending.length > 0
+            ? Buffer.concat([pending, data])
+            : data;
 
-        const lines = this.stdoutBuffers[identifier].split('\n');
-        // Keep the last incomplete line in the buffer
-        this.stdoutBuffers[identifier] = lines.pop() ?? '';
+        const NEWLINE = 0x0A;
+        const outputParts: Buffer[] = [];
+        let lineStart = 0;
 
-        const outputLines: string[] = [];
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed === '>READY') {
-                this.setState(identifier, 'ready');
-            } else if (trimmed === '>BUSY') {
-                this.setState(identifier, 'busy');
-            } else if (trimmed === '>IDLE') {
-                this.setState(identifier, 'idle');
-            } else {
-                outputLines.push(line);
+        for (let i = 0; i < buf.length; i++) {
+            if (buf[i] === NEWLINE) {
+                // Check the line (lineStart..i, excluding the \n) against markers
+                if (ServiceController.matchesMarker(buf, lineStart, i, ServiceController.MARKER_READY)) {
+                    this.setState(identifier, 'ready');
+                } else if (ServiceController.matchesMarker(buf, lineStart, i, ServiceController.MARKER_BUSY)) {
+                    this.setState(identifier, 'busy');
+                } else if (ServiceController.matchesMarker(buf, lineStart, i, ServiceController.MARKER_IDLE)) {
+                    this.setState(identifier, 'idle');
+                } else {
+                    // Not a marker — pass the raw bytes through (including the \n)
+                    outputParts.push(buf.subarray(lineStart, i + 1));
+                }
+                lineStart = i + 1;
             }
         }
 
-        // Reconstruct the buffer without marker lines
-        const filtered = outputLines.join('\n');
-        // Add newline back if there was content (to match original stream behavior)
-        if (filtered.length > 0) {
-            return Buffer.from(filtered + '\n');
-        }
-        return Buffer.alloc(0);
+        // Save any trailing bytes after the last \n for the next data event
+        this.stdoutBuffers[identifier] = lineStart < buf.length
+            ? Buffer.from(buf.subarray(lineStart))
+            : Buffer.alloc(0);
+
+        if (outputParts.length === 0) return Buffer.alloc(0);
+        return Buffer.concat(outputParts);
     }
 
     /**
