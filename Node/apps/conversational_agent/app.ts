@@ -1,10 +1,10 @@
-import { NetworkId } from 'ubiq-server/ubiq';
 import { ApplicationController } from '../../components/application';
 import { TextToSpeechService } from '../../services/text_to_speech/service';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
 import { TextGenerationService } from '../../services/text_generation/service';
 import { AudioToAudioService } from '../../services/audio_to_audio/service';
 import { VoipReceiver } from '../../components/voip_receiver';
+import { AudioSender } from '../../components/audio_sender';
 import {
     encodePacket,
     LengthPrefixedParser,
@@ -39,6 +39,9 @@ export class ConversationalAgent extends ApplicationController {
         textToSpeechService?: TextToSpeechService;
         audioToAudioService?: AudioToAudioService;
     } = {};
+
+    /** Shared sender that handles AudioInfo headers + chunked PCM protocol. */
+    private audioSender!: AudioSender;
     targetPeerQueue: string[] = [];
 
     /** Tracks the UUID of the peer that most recently sent audio. */
@@ -81,6 +84,9 @@ export class ConversationalAgent extends ApplicationController {
     }
 
     registerComponents() {
+        // Centralised audio sender — includes sampleRate in every AudioInfo header
+        this.audioSender = new AudioSender(this.scene, 95, 48000);
+
         // A VoipReceiver to receive audio data from peers via WebRTC VOIP
         this.components.voipReceiver = new VoipReceiver(this.scene);
 
@@ -227,18 +233,7 @@ export class ConversationalAgent extends ApplicationController {
         const targetPeerObj = this.roomClient.peers.get(this.lastAudioSenderUuid);
         const targetPeer = targetPeerObj?.properties.get('ubiq.displayname') ?? '';
 
-        // Send one AudioInfo for the entire batch
-        this.scene.send(new NetworkId(95), {
-            type: 'AudioInfo',
-            targetPeer: targetPeer,
-            audioLength: combined.length,
-        });
-
-        let remaining = combined;
-        while (remaining.length > 0) {
-            this.scene.send(new NetworkId(95), remaining.subarray(0, 16000));
-            remaining = remaining.subarray(16000);
-        }
+        this.audioSender.send(combined, { targetPeer });
     }
 
     /**
@@ -296,19 +291,8 @@ export class ConversationalAgent extends ApplicationController {
         });
 
         this.components.textToSpeechService?.on('data', (data: Buffer, identifier: string) => {
-            let response = data;
             const targetPeer = this.targetPeerQueue.shift() ?? '';
-
-            this.scene.send(new NetworkId(95), {
-                type: 'AudioInfo',
-                targetPeer: targetPeer,
-                audioLength: data.length,
-            });
-
-            while (response.length > 0) {
-                this.scene.send(new NetworkId(95), response.slice(0, 16000));
-                response = response.slice(16000);
-            }
+            this.audioSender.send(data, { targetPeer });
         });
     }
 }
