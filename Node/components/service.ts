@@ -95,6 +95,14 @@ interface ServiceProvider {
     requirements?: string;
     /** Optional Python command override specific to this provider */
     pythonCommand?: string;
+    /**
+     * How stdout from the child process should be interpreted.
+     * - 'text' (default): Line-buffered; stdout is scanned for >READY, >BUSY, >IDLE markers.
+     * - 'binary': Raw passthrough; no line buffering or marker scanning.
+     *   The consumer is responsible for readiness detection and state management
+     *   (e.g., via setReady()).
+     */
+    stdoutMode?: 'text' | 'binary';
 }
 
 /**
@@ -183,6 +191,24 @@ class ServiceController extends EventEmitter {
             }
             this.readyResolvers[identifier].push(resolve);
         });
+    }
+
+    /**
+     * Manually signal that a process is ready. Intended for binary-stdout
+     * services where readiness is detected by the consumer (e.g., via a
+     * protocol-level handshake) rather than by a >READY stdout marker.
+     *
+     * Only transitions from 'starting' to 'ready'. No-ops if already ready/idle.
+     */
+    setReady(identifier: string = 'default'): void {
+        const current = this.getState(identifier);
+        if (current === 'ready' || current === 'idle') return;
+        if (current === 'error' || current === 'stopped') {
+            throw new Error(
+                `Cannot set ready: process '${identifier}' is in '${current}' state`
+            );
+        }
+        this.setState(identifier, 'ready');
     }
 
     private setState(identifier: string, state: ServiceState) {
@@ -570,9 +596,14 @@ class ServiceController extends EventEmitter {
         const childProcess = this.childProcesses[identifier];
         if (childProcess && childProcess.stdout && childProcess.stderr) {
             childProcess.stdout.on('data', (data: Buffer) => {
-                const filtered = this.processStdoutMarkers(data, identifier);
-                if (filtered.length > 0) {
-                    this.emit('data', filtered, identifier);
+                if (this.provider?.stdoutMode === 'binary') {
+                    // Binary mode: pass through raw bytes, no marker scanning
+                    this.emit('data', data, identifier);
+                } else {
+                    const filtered = this.processStdoutMarkers(data, identifier);
+                    if (filtered.length > 0) {
+                        this.emit('data', filtered, identifier);
+                    }
                 }
             });
             childProcess.stderr.on('data', (data) => {

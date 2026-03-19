@@ -36,23 +36,47 @@ export class AudioSender {
 
     /**
      * Send a complete audio buffer to Unity using the AudioInfo + chunked-PCM
-     * protocol.
+     * protocol. Sends an AudioInfo header followed by the raw data chunks.
+     *
+     * Best for **one-shot** audio (e.g. TTS responses) where each call
+     * represents a discrete utterance. For continuous streaming (e.g.
+     * audio-to-audio), use `sendHeader()` once and then `sendChunks()` for
+     * each frame to avoid Unity clearing its playback queue on every header.
      *
      * @param audio   Raw PCM16-LE mono audio bytes at `this.sampleRate`.
      * @param options Optional metadata included in the AudioInfo header.
      */
     send(audio: Buffer, options?: { targetPeer?: string }): void {
         if (audio.length === 0) return;
+        this.sendHeader({ ...options, audioLength: audio.length });
+        this.sendChunks(audio);
+    }
 
-        // 1. AudioInfo header
+    /**
+     * Send only the AudioInfo header (no audio data).
+     *
+     * Use this once at the start of a continuous stream, then call
+     * `sendChunks()` for each audio frame. This avoids the queue-clearing
+     * side-effect of `dropOnNewSequence` on the Unity side.
+     */
+    sendHeader(options?: { targetPeer?: string; audioLength?: number }): void {
         this.scene.send(this.networkId, {
             type: 'AudioInfo',
             targetPeer: options?.targetPeer ?? '',
-            audioLength: audio.length.toString(),
+            audioLength: (options?.audioLength ?? 0).toString(),
             sampleRate: this.sampleRate.toString(),
         });
+    }
 
-        // 2. Raw PCM16 data in ≤MAX_CHUNK_BYTES chunks
+    /**
+     * Send raw PCM16 data chunks without an AudioInfo header.
+     *
+     * Each chunk is at most MAX_CHUNK_BYTES. Unity's InjectableAudioSource
+     * treats messages ≥ 200 bytes that are not valid JSON as raw PCM audio,
+     * so no preceding AudioInfo is needed for the data to be played.
+     */
+    sendChunks(audio: Buffer): void {
+        if (audio.length === 0) return;
         let offset = 0;
         while (offset < audio.length) {
             const end = Math.min(offset + MAX_CHUNK_BYTES, audio.length);

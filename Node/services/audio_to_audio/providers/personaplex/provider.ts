@@ -128,6 +128,7 @@ export function createPersonaPlexProvider(options?: PersonaPlexProviderOptions):
         command: 'python',
         args,
         processMode: 'singleton',
+        stdoutMode: 'binary',
         env: { PYTHONPATH: envPythonPath },
     };
 }
