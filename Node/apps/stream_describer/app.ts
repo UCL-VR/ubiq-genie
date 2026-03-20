@@ -4,6 +4,7 @@ import { MediaReceiver } from '../../components/media_receiver';
 import { MessageReader } from '../../components/message_reader';
 import { VisualQuestionAnsweringService } from '../../services/visual_question_answering/service';
 import { TextToSpeechService } from '../../services/text_to_speech/service';
+import { AudioSender } from '../../components/audio_sender';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import nconf from 'nconf';
@@ -36,6 +37,9 @@ class StreamDescriber extends ApplicationController {
         vqa?: VisualQuestionAnsweringService;
         tts?: TextToSpeechService;
     } = {};
+
+    /** Shared sender for TTS audio — includes sampleRate in AudioInfo headers. */
+    private audioSender!: AudioSender;
 
     /** Timestamp of the last frame sent per peer, to throttle. */
     private lastFrameTime = new Map<string, number>();
@@ -83,6 +87,9 @@ class StreamDescriber extends ApplicationController {
     }
 
     registerComponents(): void {
+        // Centralised audio sender — includes sampleRate in every AudioInfo header
+        this.audioSender = new AudioSender(this.scene, AUDIO_NETWORK_ID, 48000);
+
         // MediaReceiver to receive video tracks sent by MediaTrackManager
         this.components.mediaReceiver = new MediaReceiver(this.scene);
 
@@ -287,19 +294,7 @@ class StreamDescriber extends ApplicationController {
 
         this.log(`Sending ${combined.length} bytes of TTS audio to Unity`);
 
-        // One AudioInfo for the entire speech sequence
-        this.scene.send(new NetworkId(AUDIO_NETWORK_ID), {
-            type: 'AudioInfo',
-            audioLength: combined.length.toString(),
-        });
-
-        // Stream the raw PCM16 data
-        let offset = 0;
-        while (offset < combined.length) {
-            const end = Math.min(offset + 16000, combined.length);
-            this.scene.send(new NetworkId(AUDIO_NETWORK_ID), combined.subarray(offset, end));
-            offset = end;
-        }
+        this.audioSender.send(combined);
     }
 }
 

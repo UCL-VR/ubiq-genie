@@ -1,10 +1,10 @@
-import { NetworkId } from 'ubiq-server/ubiq';
 import { ApplicationController } from '../../components/application';
 import { TextToSpeechService } from '../../services/text_to_speech/service';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
 import { TextGenerationService } from '../../services/text_generation/service';
 import { AudioToAudioService } from '../../services/audio_to_audio/service';
 import { VoipReceiver } from '../../components/voip_receiver';
+import { AudioSender } from '../../components/audio_sender';
 import {
     encodePacket,
     LengthPrefixedParser,
@@ -20,17 +20,6 @@ import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
 import { fileURLToPath } from 'url';
 import nconf from 'nconf';
 
-/**
- * How many milliseconds of model audio to accumulate before flushing to Unity.
- * Batching reduces AudioInfo message overhead and gives Unity's audio system
- * a larger buffer to work with, preventing playback stutter / latency.
- *
- * The model produces one 80 ms frame per step (~12.5 fps).
- * 240 ms ≈ 3 frames — a good trade-off between latency and smoothness.
- * Override with UBIQ_AUDIO_BATCH_MS.
- */
-const AUDIO_BATCH_MS = Number(process.env.UBIQ_AUDIO_BATCH_MS) || 240;
-
 export class ConversationalAgent extends ApplicationController {
     components: {
         voipReceiver?: VoipReceiver;
@@ -39,24 +28,16 @@ export class ConversationalAgent extends ApplicationController {
         textToSpeechService?: TextToSpeechService;
         audioToAudioService?: AudioToAudioService;
     } = {};
+
+    /** Shared sender that handles AudioInfo headers + chunked PCM protocol. */
+    private audioSender!: AudioSender;
     targetPeerQueue: string[] = [];
 
     /** Tracks the UUID of the peer that most recently sent audio. */
     private lastAudioSenderUuid: string = '';
 
-    /** Whether the PersonaPlex handshake has been received. */
-    private personaplexReady: boolean = false;
-
     /** Parser instance for decoding PersonaPlex stdout framing. */
     private stdoutParser: LengthPrefixedParser = new LengthPrefixedParser();
-
-    // --- Audio output batching ---
-    /** Accumulated audio buffers (48 kHz PCM16LE) waiting to be sent to Unity. */
-    private audioOutputQueue: Buffer[] = [];
-    /** Total byte length of buffers currently in audioOutputQueue. */
-    private audioOutputQueueBytes: number = 0;
-    /** Timer handle for the periodic audio flush. */
-    private audioFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(configFile: string = 'config.json') {
         super(configFile);
@@ -81,6 +62,9 @@ export class ConversationalAgent extends ApplicationController {
     }
 
     registerComponents() {
+        // Centralised audio sender — includes sampleRate in every AudioInfo header
+        this.audioSender = new AudioSender(this.scene, 95, 48000);
+
         // A VoipReceiver to receive audio data from peers via WebRTC VOIP
         this.components.voipReceiver = new VoipReceiver(this.scene);
 
@@ -108,11 +92,19 @@ export class ConversationalAgent extends ApplicationController {
     /**
      * Audio-to-audio pipeline: audio from peers is downsampled to 24 kHz,
      * framed with the PersonaPlex binary protocol, and sent to the model.
-     * Model output (audio + text) is parsed, upsampled to 48 kHz, batched,
-     * and sent to Unity periodically (every AUDIO_BATCH_MS milliseconds).
+     * Model output (audio + text) is parsed, upsampled to 48 kHz, and sent
+     * to Unity immediately as raw PCM chunks.
+     *
+     * A single AudioInfo header is sent when the first audio frame arrives
+     * from the model. Subsequent frames are streamed as raw PCM chunks
+     * without new headers — this avoids Unity's `dropOnNewSequence`
+     * clearing the playback queue on every header.
      */
     private defineAudioToAudioPipeline() {
         const service = this.components.audioToAudioService!;
+
+        /** Whether the initial AudioInfo header has been sent for this stream. */
+        let streamStarted = false;
 
         // ---- Input: receive 48 kHz PCM16 from WebRTC ----
         this.components.voipReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
@@ -122,13 +114,17 @@ export class ConversationalAgent extends ApplicationController {
 
             // Don't send audio to the model before it's ready — it would pile
             // up in the OS pipe buffer and create a stale backlog.
-            if (!this.personaplexReady) {
+            if (service.state !== 'ready' && service.state !== 'idle') {
                 return;
             }
 
             this.lastAudioSenderUuid = uuid;
 
-            const sampleBuffer = Buffer.from(data.samples.buffer);
+            const sampleBuffer = Buffer.from(
+                data.samples.buffer,
+                data.samples.byteOffset,
+                data.samples.byteLength,
+            );
             const downsampled = downsample48kTo24k(sampleBuffer);
             const packet = encodePacket(KIND_AUDIO, downsampled);
 
@@ -148,13 +144,24 @@ export class ConversationalAgent extends ApplicationController {
             for (const packet of packets) {
                 switch (packet.kind) {
                     case KIND_HANDSHAKE:
-                        this.personaplexReady = true;
+                        service.setReady();
                         this.log('PersonaPlex handshake received — model is ready');
                         break;
 
                     case KIND_AUDIO: {
                         const upsampled = upsample24kTo48k(packet.payload);
-                        this.enqueueAudioForUnity(upsampled);
+
+                        // Send one AudioInfo at stream start so Unity knows the
+                        // sample rate and target peer. After that, send only raw
+                        // PCM chunks — no new headers that would clear the queue.
+                        if (!streamStarted) {
+                            const targetPeerObj = this.roomClient.peers.get(this.lastAudioSenderUuid);
+                            const targetPeer = targetPeerObj?.properties.get('ubiq.displayname') ?? '';
+                            this.audioSender.sendHeader({ targetPeer });
+                            streamStarted = true;
+                        }
+
+                        this.audioSender.sendChunks(upsampled);
                         break;
                     }
 
@@ -178,67 +185,11 @@ export class ConversationalAgent extends ApplicationController {
         });
 
         service.on('close', (code: number | null, signal: string | null, identifier: string) => {
-            this.flushAudioToUnity();
+            streamStarted = false;
             this.flushStream();
             this.log(`PersonaPlex process ${identifier} exited (code=${code}, signal=${signal})`, 'warning');
-            this.personaplexReady = false;
             this.stdoutParser.reset();
         });
-    }
-
-    // ---- Audio output batching helpers ----
-
-    /**
-     * Queue upsampled audio and schedule a batched send to Unity.
-     *
-     * Instead of sending each 80 ms model frame individually (which causes
-     * Unity to receive a new AudioInfo message 12.5×/sec and potentially
-     * introduces playback startup overhead per message), we accumulate
-     * frames and flush them as one larger AudioInfo batch every AUDIO_BATCH_MS.
-     */
-    private enqueueAudioForUnity(upsampled: Buffer): void {
-        this.audioOutputQueue.push(upsampled);
-        this.audioOutputQueueBytes += upsampled.length;
-
-        // Start the flush timer on the first enqueued frame
-        if (this.audioFlushTimer === null) {
-            this.audioFlushTimer = setTimeout(() => this.flushAudioToUnity(), AUDIO_BATCH_MS);
-        }
-    }
-
-    /**
-     * Flush all queued audio to Unity as a single AudioInfo + data batch.
-     */
-    private flushAudioToUnity(): void {
-        if (this.audioFlushTimer !== null) {
-            clearTimeout(this.audioFlushTimer);
-            this.audioFlushTimer = null;
-        }
-
-        if (this.audioOutputQueue.length === 0) {
-            return;
-        }
-
-        const combined = Buffer.concat(this.audioOutputQueue);
-        this.audioOutputQueue = [];
-        this.audioOutputQueueBytes = 0;
-
-        // Resolve target peer
-        const targetPeerObj = this.roomClient.peers.get(this.lastAudioSenderUuid);
-        const targetPeer = targetPeerObj?.properties.get('ubiq.displayname') ?? '';
-
-        // Send one AudioInfo for the entire batch
-        this.scene.send(new NetworkId(95), {
-            type: 'AudioInfo',
-            targetPeer: targetPeer,
-            audioLength: combined.length,
-        });
-
-        let remaining = combined;
-        while (remaining.length > 0) {
-            this.scene.send(new NetworkId(95), remaining.subarray(0, 16000));
-            remaining = remaining.subarray(16000);
-        }
     }
 
     /**
@@ -248,8 +199,13 @@ export class ConversationalAgent extends ApplicationController {
     private defineTraditionalPipeline() {
         // Step 1: When we receive audio data from a peer we send it to the transcription service
         this.components.voipReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
-            // Convert the Int16Array to a Buffer
-            const sampleBuffer = Buffer.from(data.samples.buffer);
+            // Convert the Int16Array to a Buffer (use byteOffset/byteLength
+            // in case the TypedArray is a view into a larger ArrayBuffer)
+            const sampleBuffer = Buffer.from(
+                data.samples.buffer,
+                data.samples.byteOffset,
+                data.samples.byteLength,
+            );
 
             // Send the audio data to the transcription service
             if (this.roomClient.peers.get(uuid) !== undefined) {
@@ -296,19 +252,8 @@ export class ConversationalAgent extends ApplicationController {
         });
 
         this.components.textToSpeechService?.on('data', (data: Buffer, identifier: string) => {
-            let response = data;
             const targetPeer = this.targetPeerQueue.shift() ?? '';
-
-            this.scene.send(new NetworkId(95), {
-                type: 'AudioInfo',
-                targetPeer: targetPeer,
-                audioLength: data.length,
-            });
-
-            while (response.length > 0) {
-                this.scene.send(new NetworkId(95), response.slice(0, 16000));
-                response = response.slice(16000);
-            }
+            this.audioSender.send(data, { targetPeer });
         });
     }
 }

@@ -23,6 +23,8 @@ public class AudioInfoReceivedEventArgs : EventArgs
     public string Type { get; set; }
     public string TargetPeer { get; set; }
     public int AudioLength { get; set; }
+    /// <summary>Source sample rate declared by the server (Hz). 0 if not provided.</summary>
+    public int SampleRate { get; set; }
 }
 
 /// <summary>
@@ -71,6 +73,16 @@ public class InjectableAudioSource : MonoBehaviour
     private NetworkContext context;
 
     /// <summary>
+    /// The sample rate declared by the server in the most recent AudioInfo
+    /// header. Defaults to 48 000 Hz for backward compatibility with servers
+    /// that do not send the field.
+    /// </summary>
+    private int sourceSampleRate = 48000;
+
+    /// <summary>Cached device output sample rate, set once in Start().</summary>
+    private int outputSampleRate;
+
+    /// <summary>
     /// Maximum number of float samples to keep in the playback queue.
     /// ~5 seconds at 48 kHz. Only used when dropOnNewSequence is false.
     /// </summary>
@@ -78,8 +90,10 @@ public class InjectableAudioSource : MonoBehaviour
 
     /// <summary>
     /// Messages shorter than this are treated as AudioInfo JSON headers.
+    /// Increased from 100 to 256 to accommodate the added sampleRate field
+    /// and future metadata without silently dropping headers.
     /// </summary>
-    private const int AUDIO_INFO_HEADER_MAX_SIZE = 100;
+    private const int AUDIO_INFO_HEADER_MAX_SIZE = 256;
 
     /// <summary>
     /// Raw audio packets smaller than this are discarded as noise.
@@ -92,30 +106,15 @@ public class InjectableAudioSource : MonoBehaviour
         public string type;
         public string targetPeer;
         public string audioLength;
+        public string sampleRate;
     }
 
     private void Start()
     {
-        // Use a clip filled with 1s
-        // This helps us piggyback on Unity's spatialisation using filters
-        if (debugLogging) Debug.Log($"[InjectableAudioSource] Output sample rate: {AudioSettings.outputSampleRate}");
-        var samples = new float[AudioSettings.outputSampleRate];
-        for (int i = 0; i < samples.Length; i++)
-        {
-            samples[i] = 1.0f;
-        }
+        outputSampleRate = AudioSettings.outputSampleRate;
+        SetupAudioClip();
 
-        clip = AudioClip.Create("Injectable",
-            samples.Length,
-            1,
-            AudioSettings.outputSampleRate,
-            false);
-
-        var audioSource = GetComponent<AudioSource>();
-        audioSource.clip = clip;
-        audioSource.loop = true;   // Must loop so OnAudioFilterRead keeps firing
-        clip.SetData(samples, 0);
-        audioSource.Play();
+        AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
 
         if (receiveFromNetwork)
         {
@@ -124,8 +123,65 @@ public class InjectableAudioSource : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Creates (or recreates) the 1-filled AudioClip at the current
+    /// outputSampleRate and assigns it to the AudioSource.
+    /// </summary>
+    private void SetupAudioClip()
+    {
+        var audioSource = GetComponent<AudioSource>();
+
+        if (clip != null)
+        {
+            audioSource.Stop();
+            Destroy(clip);
+        }
+
+        // Use a clip filled with 1s
+        // This helps us piggyback on Unity's spatialisation using filters
+        var onesBuffer = new float[outputSampleRate];
+        for (int i = 0; i < onesBuffer.Length; i++)
+        {
+            onesBuffer[i] = 1.0f;
+        }
+
+        clip = AudioClip.Create("Injectable",
+            onesBuffer.Length,
+            1,
+            outputSampleRate,
+            false);
+
+        clip.SetData(onesBuffer, 0);
+        audioSource.clip = clip;
+        audioSource.loop = true;   // Must loop so OnAudioFilterRead keeps firing
+        audioSource.Play();
+    }
+
+    /// <summary>
+    /// Called by Unity when the audio device configuration changes (e.g.
+    /// Bluetooth switching from A2C to HFP when the microphone activates).
+    /// Updates the cached output sample rate, recreates the AudioClip, and
+    /// clears any stale samples that were resampled for the old rate.
+    /// </summary>
+    private void OnAudioConfigurationChanged(bool deviceWasChanged)
+    {
+        int newRate = AudioSettings.outputSampleRate;
+        if (newRate == outputSampleRate)
+            return;
+
+        if (debugLogging) Debug.Log($"[InjectableAudioSource] Output sample rate changed: {outputSampleRate} → {newRate} Hz");
+        outputSampleRate = newRate;
+
+        // Queued samples were resampled for the old rate — discard them.
+        samples = new ConcurrentQueue<float>();
+
+        SetupAudioClip();
+    }
+
     private void OnDestroy()
     {
+        AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+
         if (clip != null)
         {
             Destroy(clip);
@@ -146,7 +202,17 @@ public class InjectableAudioSource : MonoBehaviour
                 var message = data.FromJson<AudioInfoMessage>();
                 int.TryParse(message.audioLength, out int audioLen);
 
-                if (debugLogging) Debug.Log($"[InjectableAudioSource] AudioInfo: audioLength={audioLen}");
+                // Update source sample rate; default to 48 000 if absent
+                if (int.TryParse(message.sampleRate, out int parsedRate) && parsedRate > 0)
+                {
+                    sourceSampleRate = parsedRate;
+                }
+                else
+                {
+                    sourceSampleRate = 48000;
+                }
+
+                if (debugLogging) Debug.Log($"[InjectableAudioSource] AudioInfo: audioLength={audioLen}, sampleRate={sourceSampleRate}");
 
                 // A new audio sequence is starting.
                 if (dropOnNewSequence)
@@ -161,6 +227,7 @@ public class InjectableAudioSource : MonoBehaviour
                     Type = message.type ?? "",
                     TargetPeer = message.targetPeer ?? "",
                     AudioLength = audioLen,
+                    SampleRate = sourceSampleRate,
                 });
                 return;
             }
@@ -176,38 +243,76 @@ public class InjectableAudioSource : MonoBehaviour
         }
 
         // Raw PCM16 audio chunk — inject it
-        InjectPcm(data.data.ToArray());
+        int samplesInjected = InjectPcm(data.data.ToArray());
 
         OnAudioChunkReceived?.Invoke(this, new AudioChunkReceivedEventArgs
         {
-            SampleCount = data.data.Length / 2,
+            SampleCount = samplesInjected,
         });
     }
 
     /// <summary>
     /// Inject raw PCM16-LE audio bytes into the playback queue.
+    /// If the source sample rate (from the most recent AudioInfo header)
+    /// differs from the device output rate, the audio is resampled using
+    /// linear interpolation before being enqueued.
     /// Can be called manually or is called automatically when
     /// receiveFromNetwork is true.
     /// </summary>
-    public void InjectPcm(Span<byte> bytes)
+    /// <returns>The number of samples enqueued (at the output sample rate).</returns>
+    public int InjectPcm(Span<byte> bytes)
     {
+        int inputSampleCount = bytes.Length / 2;
+        bool needsResample = sourceSampleRate != outputSampleRate && outputSampleRate > 0;
+
+        // Decode PCM16-LE into float[] first — we need random access for resampling
+        float[] decoded = new float[inputSampleCount];
+        for (int i = 0; i < inputSampleCount; i++)
+        {
+            decoded[i] = (short)(bytes[i * 2] | (bytes[i * 2 + 1] << 8)) / 32768f;
+        }
+
+        float[] output;
+        if (needsResample)
+        {
+            // Linear-interpolation resampler
+            double ratio = (double)sourceSampleRate / outputSampleRate;
+            int outputCount = (int)Math.Ceiling(inputSampleCount / ratio);
+            output = new float[outputCount];
+
+            for (int o = 0; o < outputCount; o++)
+            {
+                double srcPos = o * ratio;
+                int idx = (int)srcPos;
+                double frac = srcPos - idx;
+
+                float s0 = decoded[Math.Min(idx, inputSampleCount - 1)];
+                float s1 = decoded[Math.Min(idx + 1, inputSampleCount - 1)];
+                output[o] = (float)(s0 + (s1 - s0) * frac);
+            }
+        }
+        else
+        {
+            output = decoded;
+        }
+
         // When not dropping on new sequence, cap the queue to prevent
         // unbounded growth. Atomic swap avoids per-sample drain overhead.
         if (!dropOnNewSequence)
         {
-            int incomingSamples = bytes.Length / 2;
-            if (samples.Count + incomingSamples > MAX_QUEUE_SAMPLES)
+            if (samples.Count + output.Length > MAX_QUEUE_SAMPLES)
             {
                 samples = new ConcurrentQueue<float>();
                 if (debugLogging) Debug.LogWarning("[InjectableAudioSource] Queue overflow — cleared");
             }
         }
 
-        for (int i = 0; i < bytes.Length / 2; i++)
+        for (int i = 0; i < output.Length; i++)
         {
-            var sample = (short)(bytes[i * 2] | (bytes[i * 2 + 1] << 8)) / 32768f;
-            samples.Enqueue(sample);
+            samples.Enqueue(output[i]);
         }
+
+        return output.Length;
     }
 
     private void OnAudioFilterRead(float[] data, int channels)
