@@ -6,7 +6,7 @@ namespace Ubiq.Genie.Samples.SceneDescriber
 
 /// <summary>
 /// Sends a "trigger" message to the server when the user presses the spacebar.
-/// Attach this to any GameObject in the scene. The server-side stream_describer
+/// Attach this to any GameObject in the scene. The server-side scene_describer
 /// app listens on the same network ID and immediately captures a frame for
 /// scene description when it receives this message.
 /// </summary>

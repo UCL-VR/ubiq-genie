@@ -27,7 +27,7 @@ Import samples from **Window → Package Manager → Ubiq-Genie → Samples**:
 |---|---|---|
 | **Base** | `base` | Minimal scene with networking set up — use as a starting point |
 | **Conversational Agent** | `conversational_agent` | Voice-driven virtual assistant with avatar animation |
-| **Scene Describer** | `stream_describer` | Camera capture sent to server for a textual scene description |
+| **Scene Describer** | `scene_describer` | Camera capture sent to server for a textual scene description |
 | **Texture Generation** | `texture_generation` | AI-generated textures applied to scene materials |
 | **Transcription** | `transcription` | Real-time speech-to-text transcription |
 | **Video Recorder** | `video_recorder` | Virtual camera recording streamed to the server |
