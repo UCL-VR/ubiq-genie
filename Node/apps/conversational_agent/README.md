@@ -17,14 +17,43 @@ Follow these steps to run the sample:
 
 We recommend using VS Code to run and modify the server application, with the `Node` folder as the workspace root. To run the server application:
 
-1. Open a terminal and navigate to the `Node/apps/conversational_agent` directory. Ensure that your conda or venv environment is activated.
-2. Execute the command below, which will guide you through the configuration process, including setting up the server information and the required environment variables. Configuration will only run the first time you start the application. Ensure that you apply the same server configuration to the Unity client (in `Unity/Assets/ServerConfig.asset`).
+1. Open a terminal and navigate to the `Node` directory. Ensure that your conda or venv environment is activated.
+2. Start the app from `Node` using one of the commands below. Configuration will run automatically the first time a version is started. Ensure that you apply the same server configuration to the Unity client (in `Unity/Assets/ServerConfig.asset`).
 
     ```bash
+    # Prompt for a version (personaplex or multi_model)
     npm start conversational_agent
+
+    # Start a specific version directly
+    npm start conversational_agent personaplex
+    npm start conversational_agent multi_model
     ```
 
-If you need to reconfigure the application, you can run `npm start conversational_agent configure`. You may also manually configure the application by changing the `config.json` and `.env` files. The `config.json` file contains the server configuration, while the `.env` file contains the environment variables for the Azure Speech Services subscription key and region (`SPEECH_KEY` and `SPEECH_REGION`) and the OpenAI API key (`OPENAI_API_KEY`).
+If you need to reconfigure, run one of the following:
+
+```bash
+npm start conversational_agent configure
+npm start conversational_agent personaplex configure
+npm start conversational_agent multi_model configure
+```
+
+Each version has its own configuration files:
+
+- `Node/apps/conversational_agent/personaplex/config.json` for the PersonaPlex audio-to-audio pipeline.
+- `Node/apps/conversational_agent/multi_model/config.json` for the STT → text generation → TTS pipeline.
+- `Node/apps/conversational_agent/multi_model/.env` for Azure/OpenAI credentials (`SPEECH_KEY`, `SPEECH_REGION`, `OPENAI_API_KEY`).
+
+> [!WARNING]
+> The `personaplex` version is currently not optimized for multi-party conversations. It does not differentiate which peer in the room is speaking.
+
+### Version Differences
+
+| Version | Pipeline | Typical Use | Requirements | Multi-Party Behavior |
+|---|---|---|---|---|
+| `personaplex` | Audio → PersonaPlex → Audio (speech-to-speech) | Low-latency voice-to-voice interactions with a single active speaker | PersonaPlex repo + model assets + Python environment configured in `personaplex/config.json` | Does not reliably identify which peer is speaking |
+| `multi_model` | Speech-to-text → text generation → text-to-speech | Multi-user conversations where speaker identity and addressing matter | Azure Speech credentials + OpenAI API key in `multi_model/.env` | Tracks speaker identity through STT output and routes responses to the parsed target peer |
+
+In short: choose `personaplex` for direct speech-to-speech behavior, and choose `multi_model` for more reliable multi-party turn-taking and speaker-aware routing.
 
 ### Client (Unity)
 

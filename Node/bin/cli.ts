@@ -2,29 +2,98 @@
 
 import { execSync } from 'child_process';
 import { join } from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { input, select } from '@inquirer/prompts';
 
 const args = process.argv.slice(2);
-
-if (args.length < 1) {
-    console.error('Usage: npm start <app-name> [--config], where <app-name> is a directory in the Node/apps directory.');
-    process.exit(1);
-}
-
 const appName = args[0];
-const configMode = args.includes('configure');
-const appDirectory = join(process.cwd(), 'apps', appName);
-const configFilePath = join(appDirectory, 'config.json');
-const envExampleFilePath = join(appDirectory, '.env.example');
-const envFilePath = join(appDirectory, '.env');
 
-if (!existsSync(configFilePath)) {
-    console.error(`Configuration file not found for app: ${appName}`);
+let appDirectory = '';
+let configFilePath = '';
+let appEntryFilePath = '';
+let envExampleFilePath = '';
+let envFilePath = '';
+let config: any = {};
+
+if (!appName) {
+    console.error('Usage: npm start <app-name> [version] [configure], where <app-name> is a directory in Node/apps.');
     process.exit(1);
 }
 
-const config = JSON.parse(readFileSync(configFilePath, 'utf-8'));
+const appRootDirectory = join(process.cwd(), 'apps', appName);
+const extraArgs = args.slice(1);
+const configMode = extraArgs.includes('configure');
+const positionalArgs = extraArgs.filter(arg => arg !== 'configure');
+const requestedVersion = positionalArgs[0];
+
+if (positionalArgs.length > 1) {
+    console.error('Too many positional arguments.');
+    console.error('Usage: npm start <app-name> [version] [configure]');
+    process.exit(1);
+}
+
+if (!existsSync(appRootDirectory)) {
+    console.error(`Application not found: ${appName}`);
+    process.exit(1);
+}
+
+function discoverVersions(rootDirectory: string): string[] {
+    return readdirSync(rootDirectory, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .filter((folderName) => existsSync(join(rootDirectory, folderName, 'config.json')))
+        .sort();
+}
+
+async function resolveAppDirectory(): Promise<{ appDirectory: string; selectedVersion?: string }> {
+    const availableVersions = discoverVersions(appRootDirectory);
+    const hasRootConfig = existsSync(join(appRootDirectory, 'config.json'));
+
+    if (requestedVersion) {
+        if (!availableVersions.includes(requestedVersion)) {
+            if (availableVersions.length === 0) {
+                console.error(
+                    `App "${appName}" does not have versions. Start it with "npm start ${appName}"${configMode ? ' or "npm start ' + appName + ' configure".' : '.'}`,
+                );
+            } else {
+                console.error(
+                    `Unknown version "${requestedVersion}" for app "${appName}". Available versions: ${availableVersions.join(', ')}`,
+                );
+            }
+            process.exit(1);
+        }
+
+        return {
+            appDirectory: join(appRootDirectory, requestedVersion),
+            selectedVersion: requestedVersion,
+        };
+    }
+
+    if (availableVersions.length > 1) {
+        const selectedVersion = await select({
+            message: `Select a version for "${appName}":`,
+            choices: availableVersions.map((version) => ({
+                name: version,
+                value: version,
+            })),
+        });
+
+        return {
+            appDirectory: join(appRootDirectory, selectedVersion),
+            selectedVersion,
+        };
+    }
+
+    if (availableVersions.length === 1 && !hasRootConfig) {
+        const onlyVersion = availableVersions[0];
+        return {
+            appDirectory: join(appRootDirectory, onlyVersion),
+            selectedVersion: onlyVersion,
+        };
+    }
+
+    return { appDirectory: appRootDirectory };
+}
 
 async function runConfigJsonConfiguration() {
     const serverType = await select({
@@ -131,6 +200,29 @@ async function runEnvConfiguration() {
 }
 
 (async () => {
+    const resolved = await resolveAppDirectory();
+    appDirectory = resolved.appDirectory;
+    configFilePath = join(appDirectory, 'config.json');
+    appEntryFilePath = join(appDirectory, 'app.ts');
+    envExampleFilePath = join(appDirectory, '.env.example');
+    envFilePath = join(appDirectory, '.env');
+
+    if (!existsSync(configFilePath)) {
+        console.error(`Configuration file not found for app: ${appName}${resolved.selectedVersion ? ` (version: ${resolved.selectedVersion})` : ''}`);
+        process.exit(1);
+    }
+
+    if (!existsSync(appEntryFilePath)) {
+        console.error(`Entry file not found: ${appEntryFilePath}`);
+        process.exit(1);
+    }
+
+    config = JSON.parse(readFileSync(configFilePath, 'utf-8'));
+
+    if (resolved.selectedVersion) {
+        console.log(`Selected app version: ${appName}/${resolved.selectedVersion}`);
+    }
+
     if (configMode || !config.configurationComplete) {
         await runConfigJsonConfiguration();
         await runServiceConfiguration();
