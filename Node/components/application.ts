@@ -1,11 +1,8 @@
-import { NetworkScene } from '@ucl-vr/ubiq';
+import { NetworkScene, UbiqTcpConnection, TcpConnectionWrapper, WrappedTcpServer, WrappedSecureWebSocketServer } from '@ucl-vr/ubiq';
 import { RoomClient } from '@ucl-vr/ubiq-server/components/roomclient.js';
-import path from 'path';
-import { spawn } from 'child_process';
+import { RoomServer, IceServerProvider, Status } from '@ucl-vr/ubiq-server/modules/lib/index.js';
 import nconf from 'nconf';
-import { UbiqTcpConnection, TcpConnectionWrapper } from '@ucl-vr/ubiq';
 import { Logger } from './logger';
-import { fileURLToPath } from 'url';
 import * as dotenv from 'dotenv';
 
 export class ApplicationController {
@@ -69,7 +66,7 @@ export class ApplicationController {
     async joinRoom(): Promise<void> {
         let uri = nconf.get('roomserver:uri');
         if (!nconf.get('roomserver:joinExisting')) {
-            await this.startServer(this.configPath);
+            this.startServer();
             uri = 'localhost';
         }
 
@@ -125,45 +122,31 @@ export class ApplicationController {
     }
 
     /**
-     * Starts a Ubiq server with the specified configuration files.
+     * Starts a Ubiq server in-process using the configuration already loaded by nconf.
      *
      * @memberof ApplicationController
-     * @param configPath The path to the configuration file to pass to the server
      */
-    async startServer(configPath?: string): Promise<void> {
-        const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    startServer(): void {
+        const roomServer = new RoomServer();
 
-        const params = ['ubiq-server'];
-        if (configPath) {
-            params.push(path.resolve(__dirname, configPath));
+        roomServer.addServer(new WrappedTcpServer(nconf.get('roomserver:tcp')));
+        roomServer.addServer(new WrappedSecureWebSocketServer(nconf.get('roomserver:wss')));
+
+        new Status(roomServer, nconf.get('status'));
+
+        const iceServerProvider = new IceServerProvider(roomServer);
+        const iceServers = nconf.get('iceservers');
+        if (iceServers) {
+            for (const iceServer of iceServers) {
+                iceServerProvider.addIceServer(
+                    iceServer.uri, iceServer.secret, iceServer.timeoutSeconds,
+                    iceServer.refreshSeconds, iceServer.username, iceServer.password
+                );
+            }
         }
 
-        const child = spawn('npx', params, {
-            stdio: ['pipe', 'pipe', 'pipe'],
-            shell: true,
-        });
-
-        if (child.stderr) {
-            child.stderr.on('data', (data) => {
-                Logger.flushStream();
-                process.stderr.write(`\x1b[31m[Ubiq Server]\x1b[0m ${data}`);
-            });
-        }
-
-        if (child.stdout) {
-            child.stdout.on('data', (data) => {
-                Logger.flushStream();
-                process.stdout.write(`\x1b[32m[Ubiq Server]\x1b[0m ${data}`);
-            });
-        }
-
-        // Wait for the child process to print "Added RoomServer port" before returning
-        return new Promise<void>((resolve) => {
-            child.stdout?.on('data', (data) => {
-                if (data.toString().includes('Added RoomServer port')) {
-                    resolve();
-                }
-            });
+        process.on('SIGINT', () => {
+            roomServer.exit().finally(() => process.exit(0));
         });
     }
 }
