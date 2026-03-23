@@ -1,9 +1,9 @@
-import { NetworkScene } from 'ubiq-server/ubiq';
-import { RoomClient } from 'ubiq-server/components/roomclient.js';
+import { NetworkScene } from '@ucl-vr/ubiq';
+import { RoomClient } from '@ucl-vr/ubiq-server/components/roomclient.js';
 import path from 'path';
 import { spawn } from 'child_process';
 import nconf from 'nconf';
-import { UbiqTcpConnection, TcpConnectionWrapper } from 'ubiq-server/ubiq';
+import { UbiqTcpConnection, TcpConnectionWrapper } from '@ucl-vr/ubiq';
 import { Logger } from './logger';
 import { fileURLToPath } from 'url';
 import * as dotenv from 'dotenv';
@@ -132,18 +132,14 @@ export class ApplicationController {
      */
     async startServer(configPath?: string): Promise<void> {
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
-        const ubiqPath = path.resolve(__dirname, '..', 'node_modules', 'ubiq-server');
 
-        var params = ['start'];
-        // If configPath is provided, add it to the params
+        const params = ['ubiq-server'];
         if (configPath) {
-            const absConfigPath = path.resolve(__dirname, configPath);
-            params.push(absConfigPath);
+            params.push(path.resolve(__dirname, configPath));
         }
 
-        const child = spawn('npm', params, {
-            stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
-            cwd: ubiqPath,
+        const child = spawn('npx', params, {
+            stdio: ['pipe', 'pipe', 'pipe'],
             shell: true,
         });
 

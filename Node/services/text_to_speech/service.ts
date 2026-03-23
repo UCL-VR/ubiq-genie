@@ -1,6 +1,6 @@
 import { ServiceController } from '../../components/service';
 import type { ServiceProvider, ProviderRegistry } from '../../components/service';
-import { NetworkScene } from 'ubiq-server/ubiq';
+import { NetworkScene } from '@ucl-vr/ubiq';
 import { AzureTTSProvider } from './providers/azure/provider';
 import { KokoroTTSProvider } from './providers/kokoro/provider';
 

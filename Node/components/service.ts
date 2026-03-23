@@ -2,9 +2,9 @@ import { EventEmitter } from 'node:events';
 import { spawn, spawnSync, execSync, ChildProcess, SpawnOptions } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
-import { NetworkScene } from 'ubiq-server/ubiq';
+import { NetworkScene } from '@ucl-vr/ubiq';
 import { Logger } from './logger';
-import { RoomClient } from 'ubiq-server/components/roomclient';
+import { RoomClient } from '@ucl-vr/ubiq-server/components/roomclient.js';
 import nconf from 'nconf';
 
 /**

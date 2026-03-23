@@ -1,6 +1,6 @@
 import { ServiceController } from '../../components/service';
 import type { ServiceProvider, ProviderRegistry } from '../../components/service';
-import { NetworkScene } from 'ubiq-server/ubiq';
+import { NetworkScene } from '@ucl-vr/ubiq';
 import nconf from 'nconf';
 import { createOpenAIProvider } from './providers/openai/provider';
 import { createHuggingFaceProvider } from './providers/huggingface/provider';

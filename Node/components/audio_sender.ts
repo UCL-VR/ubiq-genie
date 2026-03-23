@@ -1,4 +1,4 @@
-import { NetworkId, NetworkScene } from 'ubiq-server/ubiq';
+import { NetworkId, NetworkScene } from '@ucl-vr/ubiq';
 
 /** Maximum bytes of raw PCM16 data per network message. */
 const MAX_CHUNK_BYTES = 16000;

@@ -1,6 +1,6 @@
-// import { UbiqTcpConnection } from 'ubiq-server/ubiq';
+// import { UbiqTcpConnection } from '@ucl-vr/ubiq';
 import { ApplicationController } from '../../components/application';
-import { NetworkId } from 'ubiq-server/ubiq';
+import { NetworkId } from '@ucl-vr/ubiq';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
 import { NemotronStreamingSTTProvider } from '../../services/speech_to_text/providers/nemotron_streaming/provider';
 import fs from 'fs';

@@ -1,6 +1,6 @@
 import { ServiceController } from '../../components/service';
 import type { ServiceProvider, ProviderRegistry } from '../../components/service';
-import { NetworkScene } from 'ubiq-server/ubiq';
+import { NetworkScene } from '@ucl-vr/ubiq';
 import { createStableDiffusionProvider } from './providers/stable_diffusion/provider';
 
 const SERVICE_CONFIG_KEY = 'imageGeneration';
