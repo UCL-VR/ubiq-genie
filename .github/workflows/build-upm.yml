@@ -3,16 +3,16 @@ name: Build UPM branch
 on:
   push:
     branches:
-      - dev
+      - main
+  workflow_dispatch:
 
 jobs:
   build-upm:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout unity-refactor
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: unity-refactor
           fetch-depth: 0
 
       - name: Extract package to root
