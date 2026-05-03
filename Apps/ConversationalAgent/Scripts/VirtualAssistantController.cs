@@ -13,9 +13,14 @@ public class VirtualAssistantController : MonoBehaviour
 {
     public HandMover handMover;
     public float turnSpeed = 10.0f;
+    public float gestureStartVolume = 0.006f;
+    public float gestureStopVolume = 0.003f;
+    public float minGestureHoldTime = 0.2f;
 
     private string assistantSpeechTargetPeerName;
     private float assistantSpeechVolume;
+    private bool handsPlaying;
+    private float handsHoldUntilTime;
     private IPeer lastTargetPeer;
 
     private RoomClient roomClient;
@@ -37,16 +42,31 @@ public class VirtualAssistantController : MonoBehaviour
 
     void UpdateHands()
     {
-        if (handMover)
+        if (!handMover)
         {
-            if (assistantSpeechVolume > SPEECH_VOLUME_FLOOR)
-            {
-                handMover.Play();
-            }
-            else
-            {
-                handMover.Stop();
-            }
+            return;
+        }
+
+        var startThreshold = Mathf.Max(gestureStartVolume, gestureStopVolume);
+        var stopThreshold = Mathf.Min(gestureStartVolume, gestureStopVolume);
+
+        if (assistantSpeechVolume >= startThreshold)
+        {
+            handsPlaying = true;
+            handsHoldUntilTime = Time.time + minGestureHoldTime;
+        }
+        else if (assistantSpeechVolume <= stopThreshold && Time.time >= handsHoldUntilTime)
+        {
+            handsPlaying = false;
+        }
+
+        if (handsPlaying)
+        {
+            handMover.Play();
+        }
+        else
+        {
+            handMover.Stop();
         }
     }
 

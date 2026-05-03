@@ -18,9 +18,10 @@ public class ConversationalAgentManager : MonoBehaviour
     {
         public float startTime;
         public int samples;
+        public int sampleRate;
         public string speechTargetName;
 
-        public float endTime { get { return startTime + samples/(float)AudioSettings.outputSampleRate; } }
+        public float endTime { get { return startTime + samples / (float)sampleRate; } }
     }
 
     public InjectableAudioSource audioSource;
@@ -91,6 +92,7 @@ public class ConversationalAgentManager : MonoBehaviour
         var prevUnit = speechUnits.Count > 0 ? speechUnits[speechUnits.Count - 1] : null;
         speechUnit.startTime = prevUnit != null ? prevUnit.endTime : Time.time;
         speechUnit.samples = e.SampleCount;
+        speechUnit.sampleRate = AudioSettings.outputSampleRate;
         speechUnit.speechTargetName = speechTargetName;
         speechUnits.Add(speechUnit);
     }
