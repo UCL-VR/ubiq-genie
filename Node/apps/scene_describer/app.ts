@@ -25,12 +25,12 @@ const TRIGGER_NETWORK_ID = 100;
 const FRAME_INTERVAL_MS = 0;
 
 /**
- * StreamDescriber ingests a video stream (with track ID "description_stream")
+ * SceneDescriber ingests a video stream (with track ID "description_stream")
  * via MediaReceiver, forwards frames to a VisualQuestionAnsweringService
  * (FastVLM), and sends the resulting text description to Unity clients over
  * a fixed network ID.
  */
-class StreamDescriber extends ApplicationController {
+class SceneDescriber extends ApplicationController {
     components: {
         mediaReceiver?: MediaReceiver;
         triggerReader?: MessageReader;
@@ -270,7 +270,7 @@ class StreamDescriber extends ApplicationController {
         }
         this.ttsFlushTimer = setTimeout(
             () => this.flushTtsAudio(),
-            StreamDescriber.TTS_FLUSH_DELAY_MS,
+            SceneDescriber.TTS_FLUSH_DELAY_MS,
         );
     }
 
@@ -302,8 +302,8 @@ if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
     const configPath = './config.json';
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const absConfigPath = path.resolve(__dirname, configPath);
-    const app = new StreamDescriber(absConfigPath);
+    const app = new SceneDescriber(absConfigPath);
     app.start();
 }
 
-export { StreamDescriber };
+export { SceneDescriber };

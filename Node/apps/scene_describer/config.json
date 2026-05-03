@@ -1,6 +1,6 @@
 {
   "$schema": "../../config.schema.json",
-  "name": "StreamDescriber",
+  "name": "Scene Describer",
   "roomGuid": "c69a7f14-5cb0-4356-89e2-8c1e0e15be2f",
   "roomserver": {
     "joinExisting": false,
