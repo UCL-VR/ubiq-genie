@@ -59,6 +59,7 @@ for await (const line of rl) {
 
     const input = opts.thinking ? trimmed : trimmed + " /no_think";
     console.error(`[llama.cpp] IN: ${JSON.stringify(input)}`);
+    process.stdout.write(">BUSY\n");
 
     let first = true;
     const response = await session.prompt(input, {
@@ -73,5 +74,6 @@ for await (const line of rl) {
     });
 
     process.stdout.write("\n");
+    process.stdout.write(">IDLE\n");
     console.error(`[llama.cpp] OUT: ${JSON.stringify(response.trim())}`);
 }

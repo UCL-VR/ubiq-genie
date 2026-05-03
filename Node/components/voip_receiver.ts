@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { PeerConnectionManager } from 'ubiq-server/components/peerconnectionmanager.js';
+import { PeerConnectionManager } from '@ucl-vr/ubiq-server/components/peerconnectionmanager.js';
 
 // We use the @roamhq/wrtc package as the regular wrtc package has been abandoned :(
 import wrtc from '@roamhq/wrtc';

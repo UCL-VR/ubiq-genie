@@ -1,4 +1,4 @@
-import { NetworkId } from 'ubiq-server/ubiq';
+import { NetworkId } from '@ucl-vr/ubiq';
 import { ApplicationController } from '../../components/application';
 import { MessageReader } from '../../components/message_reader';
 import { ImageGenerationService } from '../../services/image_generation/service';

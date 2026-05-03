@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
-import { NetworkId, type INetworkComponent, type NetworkContext, type NetworkScene, type Message } from 'ubiq-server/ubiq';
-import type { RoomClient, RoomPeer } from 'ubiq-server/components/roomclient';
+import { NetworkId, type INetworkComponent, type NetworkContext, type NetworkScene, type Message } from '@ucl-vr/ubiq';
+import type { RoomClient, RoomPeer } from '@ucl-vr/ubiq-server/components/roomclient.js';
 
 // We use the @roamhq/wrtc package as the regular wrtc package has been abandoned :(
 import wrtc from '@roamhq/wrtc';

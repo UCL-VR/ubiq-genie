@@ -19,14 +19,14 @@ For this sample, you will need:
 
 We recommend using VS Code to run and modify the server application, with the `Node` folder as the workspace root. To run the server application:
 
-1. Open a terminal and navigate to the `Node/apps/stream_describer` directory. Ensure that your conda or venv environment is activated.
+1. Open a terminal and navigate to the `Node/apps/scene_describer` directory. Ensure that your conda or venv environment is activated.
 2. Execute the command below, which will guide you through the configuration process, including setting up the server information. Configuration will only run the first time you start the application. Ensure that you apply the same server configuration to the Unity client (in `Unity/Assets/ServerConfig.asset`).
 
     ```bash
-    npm start stream_describer
+    npm start scene_describer
     ```
 
-If you need to reconfigure the application, you can run `npm start stream_describer configure`. You may also manually configure the application by editing the `config.json` file. At a minimum, set `fastvlmRepoPath` and `fastvlmModelPath` to point to your local ml-fastvlm clone and checkpoint directory.
+If you need to reconfigure the application, you can run `npm start scene_describer configure`. You may also manually configure the application by editing the `config.json` file. At a minimum, set `fastvlmRepoPath` and `fastvlmModelPath` to point to your local ml-fastvlm clone and checkpoint directory.
 
 ### Client (Unity)
 

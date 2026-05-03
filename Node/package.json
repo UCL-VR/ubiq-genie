@@ -1,32 +1,81 @@
 {
   "name": "ubiq-genie",
-  "version": "0.2.3",
-  "description": "Ubiq-Genie",
+  "version": "1.0.0",
+  "description": "A framework for building server-assisted collaborative mixed reality applications with Ubiq",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "bin": {
+    "ubiq-genie": "bin/cli.ts"
+  },
+  "files": [
+    "dist/",
+    "components/",
+    "services/",
+    "apps/",
+    "bin/",
+    "index.ts",
+    "tsconfig.json",
+    "config.schema.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node --import \"data:text/javascript,import { register } from 'node:module'; import { pathToFileURL } from 'node:url'; register('ts-node/esm', pathToFileURL('./'));\" bin/cli.ts",
+    "build": "tsc -p tsconfig.build.json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "node --import \"data:text/javascript,import { register } from 'node:module'; import { pathToFileURL } from 'node:url'; register('ts-node/esm', pathToFileURL('./'));\" bin/postinstall.ts",
     "lint": "eslint"
   },
-  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UCL-VR/ubiq-genie.git",
+    "directory": "Node"
+  },
+  "homepage": "https://github.com/UCL-VR/ubiq-genie#readme",
+  "bugs": {
+    "url": "https://github.com/UCL-VR/ubiq-genie/issues"
+  },
+  "keywords": [
+    "ubiq",
+    "mixed-reality",
+    "collaborative",
+    "vr",
+    "xr",
+    "webrtc",
+    "ai",
+    "generative",
+    "real-time"
+  ],
   "author": "UCL VECG",
   "license": "Apache-2.0",
   "dependencies": {
     "@inquirer/prompts": "^5.1.0",
     "@roamhq/wrtc": "^0.8.0",
     "@types/webrtc": "^0.0.43",
+    "@ucl-vr/ubiq": "^1.0.0",
+    "@ucl-vr/ubiq-server": "^1.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "inquirer": "^9.3.1",
+    "nconf": "^0.11.3",
     "node-llama-cpp": "^3.15.1",
     "ollama": "^0.6.3",
-    "nconf": "^0.11.3",
     "uuid": "^9.0.1",
     "ws": "^8.17.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.6.0",
     "@types/eslint__js": "^8.42.3",
+    "@types/express": "^5.0.6",
     "@types/inquirer": "^9.0.7",
     "@types/nconf": "^0.10.6",
     "@types/node": "^20.14.5",

@@ -1,7 +1,13 @@
 import { ServiceController } from '../../components/service';
-import type { ServiceProvider } from '../../components/service';
-import { NetworkScene } from 'ubiq-server/ubiq';
+import type { ServiceProvider, ProviderRegistry } from '../../components/service';
+import { NetworkScene } from '@ucl-vr/ubiq';
 import { createPersonaPlexProvider } from './providers/personaplex/provider';
+
+const SERVICE_CONFIG_KEY = 'audioToAudio';
+
+const providers: ProviderRegistry = {
+    'personaplex': (config) => createPersonaPlexProvider(config.options as any),
+};
 
 /**
  * Audio-to-audio service that manages a child process capable of ingesting
@@ -17,8 +23,8 @@ import { createPersonaPlexProvider } from './providers/personaplex/provider';
  */
 class AudioToAudioService extends ServiceController {
     constructor(scene: NetworkScene, provider?: ServiceProvider) {
-        const resolvedProvider = provider ?? createPersonaPlexProvider();
-        super(scene, 'AudioToAudioService', resolvedProvider);
+        const resolvedProvider = provider ?? ServiceController.resolveProvider(SERVICE_CONFIG_KEY, providers, createPersonaPlexProvider());
+        super(scene, 'AudioToAudioService', resolvedProvider, SERVICE_CONFIG_KEY);
     }
 }
 

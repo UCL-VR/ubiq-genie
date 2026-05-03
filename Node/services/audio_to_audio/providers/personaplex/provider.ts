@@ -6,14 +6,15 @@ import nconf from 'nconf';
 /**
  * Resolve the PersonaPlex installation directory from config.
  *
- * The `personaplexPath` key in config.json must be an absolute path pointing
- * to the cloned PersonaPlex repository. The directory must contain `moshi/`.
+ * Reads from `services.audioToAudio.externalRepo.path` in config.json.
  */
 function resolvePersonaPlexPath(): string {
-    const configured: unknown = nconf.get('personaplexPath');
+    const configured: unknown = nconf.get('services:audioToAudio:externalRepo:path');
+
     if (typeof configured !== 'string' || configured.trim().length === 0) {
         throw new Error(
-            'personaplexPath must be set in config.json. ' +
+            'PersonaPlex repo path must be set in config.json under ' +
+            'services.audioToAudio.externalRepo.path. ' +
             'Provide the absolute path to the PersonaPlex repository, e.g. "/home/user/personaplex".'
         );
     }
@@ -21,7 +22,7 @@ function resolvePersonaPlexPath(): string {
     const trimmed = configured.trim();
     if (!path.isAbsolute(trimmed)) {
         throw new Error(
-            `personaplexPath must be an absolute path, got: "${trimmed}". ` +
+            `externalRepo.path must be an absolute path, got: "${trimmed}". ` +
             `Example: "/home/user/personaplex"`
         );
     }
@@ -59,7 +60,9 @@ export interface PersonaPlexProviderOptions {
  * pointed at the PersonaPlex installation's `moshi/` package directory.
  *
  * Prerequisites:
- *   - Clone PersonaPlex: `git clone https://github.com/NVIDIA/personaplex ../personaplex`
+ *   - Clone the PersonaPlex fork with stdio support:
+ *     `git clone https://github.com/nsalminen/personaplex ../personaplex`
+ *     (fork of https://github.com/NVIDIA/personaplex with added stdio streaming)
  *   - Install it: `pip install ../personaplex/moshi/.`
  *   - Accept the HF model license and set HF_TOKEN
  *   - CUDA GPU required (or use --cpu-offload)
@@ -74,9 +77,9 @@ export function createPersonaPlexProvider(options?: PersonaPlexProviderOptions):
         throw new Error(
             `PersonaPlex not found at '${personaplexPath}'. ` +
                 `Expected '${moshiPackageDir}' to exist.\n` +
-                `Clone the repo:  git clone https://github.com/NVIDIA/personaplex "${personaplexPath}"\n` +
+                `Clone the repo:  git clone https://github.com/nsalminen/personaplex "${personaplexPath}"\n` +
                 `Install it:      pip install "${moshiPackageDir}/."\n` +
-                `Or set "personaplexPath" in your app's config.json.`
+                `Or set "services.audioToAudio.externalRepo.path" in your app's config.json.`
         );
     }
 
@@ -125,6 +128,7 @@ export function createPersonaPlexProvider(options?: PersonaPlexProviderOptions):
         command: 'python',
         args,
         processMode: 'singleton',
+        stdoutMode: 'binary',
         env: { PYTHONPATH: envPythonPath },
     };
 }

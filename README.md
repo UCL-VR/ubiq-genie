@@ -61,6 +61,8 @@ The `Node/apps` folder contains a number of samples that demonstrate how to use 
 - [**Multi-user Conversational Agent**](Node/apps/conversational_agent/README.md): a conversational agent that can be interacted with by multiple users
 - [**Transcription**](Node/apps/transcription/README.md): transcribes and audio of each user in the room in separate files
 
+Apps may optionally include version subfolders under `Node/apps/<app-name>/`, where each version has its own `app.ts` and `config.json`. Start with `npm start <app-name>` to choose interactively, or `npm start <app-name> <version>` to launch a specific version.
+
 For a demo video of the samples, please refer to the [Ubiq-Genie demo video](https://youtu.be/cGz0z9BIgQk).
 
 ## Support
