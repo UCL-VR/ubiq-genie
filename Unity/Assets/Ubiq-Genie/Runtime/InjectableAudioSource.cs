@@ -195,6 +195,8 @@ public class InjectableAudioSource : MonoBehaviour
     /// </summary>
     public void ProcessMessage(ReferenceCountedSceneGraphMessage data)
     {
+        if (debugLogging) Debug.Log($"[InjectableAudioSource] Message received: {data.data.Length} bytes");
+
         if (data.data.Length < AUDIO_INFO_HEADER_MAX_SIZE)
         {
             try
@@ -231,14 +233,16 @@ public class InjectableAudioSource : MonoBehaviour
                 });
                 return;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                if (debugLogging) Debug.LogWarning($"[InjectableAudioSource] Message ({data.data.Length} bytes) failed JSON parse: {e.Message}");
                 // Not valid JSON — fall through to treat as audio data
             }
         }
 
         if (data.data.Length < MIN_AUDIO_PACKET_SIZE)
         {
+            if (debugLogging) Debug.LogWarning($"[InjectableAudioSource] Discarding message: {data.data.Length} bytes (too small for audio, too large or invalid for AudioInfo)");
             return;
         }
 

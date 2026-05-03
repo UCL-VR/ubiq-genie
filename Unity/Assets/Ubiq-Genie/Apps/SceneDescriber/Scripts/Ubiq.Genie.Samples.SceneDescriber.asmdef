@@ -3,7 +3,8 @@
     "rootNamespace": "Ubiq.Genie.Samples.SceneDescriber",
     "references": [
         "Ubiq.Genie",
-        "Ubiq"
+        "Ubiq",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
