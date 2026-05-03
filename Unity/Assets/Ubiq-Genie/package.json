@@ -1,6 +1,6 @@
 {
     "name": "com.ucl.ubiq-genie",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "displayName": "Ubiq-Genie",
     "description": "Server-assisted collaborative mixed reality features for Ubiq.",
     "unity": "6000.0",
