@@ -112,7 +112,6 @@ public class InjectableAudioSource : MonoBehaviour
     private void Start()
     {
         outputSampleRate = AudioSettings.outputSampleRate;
-        Debug.Log($"[InjectableAudioSource] Device output sample rate: {outputSampleRate} Hz");
         SetupAudioClip();
 
         AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
@@ -170,7 +169,7 @@ public class InjectableAudioSource : MonoBehaviour
         if (newRate == outputSampleRate)
             return;
 
-        Debug.Log($"[InjectableAudioSource] Output sample rate changed: {outputSampleRate} → {newRate} Hz (deviceChanged={deviceWasChanged})");
+        if (debugLogging) Debug.Log($"[InjectableAudioSource] Output sample rate changed: {outputSampleRate} → {newRate} Hz");
         outputSampleRate = newRate;
 
         // Queued samples were resampled for the old rate — discard them.
@@ -215,7 +214,7 @@ public class InjectableAudioSource : MonoBehaviour
                     sourceSampleRate = 48000;
                 }
 
-                if (debugLogging) Debug.Log($"[InjectableAudioSource] AudioInfo parsed: audioLength={audioLen}, sampleRate={sourceSampleRate}, outputRate={outputSampleRate}, needsResample={sourceSampleRate != outputSampleRate}");
+                if (debugLogging) Debug.Log($"[InjectableAudioSource] AudioInfo: audioLength={audioLen}, sampleRate={sourceSampleRate}");
 
                 // A new audio sequence is starting.
                 if (dropOnNewSequence)
@@ -250,8 +249,6 @@ public class InjectableAudioSource : MonoBehaviour
         // Raw PCM16 audio chunk — inject it
         int samplesInjected = InjectPcm(data.data.ToArray());
 
-        if (debugLogging) Debug.Log($"[InjectableAudioSource] Audio chunk: {data.data.Length} bytes → {samplesInjected} samples enqueued (queue depth: {samples.Count})");
-
         OnAudioChunkReceived?.Invoke(this, new AudioChunkReceivedEventArgs
         {
             SampleCount = samplesInjected,
@@ -271,11 +268,6 @@ public class InjectableAudioSource : MonoBehaviour
     {
         int inputSampleCount = bytes.Length / 2;
         bool needsResample = sourceSampleRate != outputSampleRate && outputSampleRate > 0;
-
-        if (debugLogging && needsResample)
-        {
-            Debug.Log($"[InjectableAudioSource] Resampling: {sourceSampleRate} Hz → {outputSampleRate} Hz, input samples: {inputSampleCount}");
-        }
 
         // Decode PCM16-LE into float[] first — we need random access for resampling
         float[] decoded = new float[inputSampleCount];
