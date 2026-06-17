@@ -1,4 +1,4 @@
-import { NetworkId } from 'ubiq-server/ubiq';
+import { NetworkId } from '@ucl-vr/ubiq';
 import { ApplicationController } from '../../components/application';
 import { MessageReader } from '../../components/message_reader';
 import { ImageGenerationService } from '../../services/image_generation/service';
@@ -6,7 +6,7 @@ import { SpeechToTextService } from '../../services/speech_to_text/service';
 import { FileServer } from '../../components/file_server';
 import path from 'path';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
-import { MediaReceiver } from '../../components/media_receiver';
+import { VoipReceiver } from '../../components/voip_receiver';
 import { fileURLToPath } from 'url';
 
 class TextureGeneration extends ApplicationController {
@@ -38,8 +38,8 @@ class TextureGeneration extends ApplicationController {
         // A FileServer to serve image files to clients
         this.components.fileServer = new FileServer('data');
 
-        // An MediaReceiver to receive audio data from peers
-        this.components.mediaReceiver = new MediaReceiver(this.scene);
+        // An VoipReceiver to receive audio data from peers via WebRTC VOIP
+        this.components.voipReceiver = new VoipReceiver(this.scene);
 
         // A SpeechToTextService to transcribe audio coming from peers
         this.components.speech2text = new SpeechToTextService(this.scene);
@@ -77,7 +77,7 @@ class TextureGeneration extends ApplicationController {
         });
 
         // Step 2: When we receive audio data from a peer, we send it to the transcription service
-        this.components.mediaReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
+        this.components.voipReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
             // Convert the Int16Array to a Buffer
             const sampleBuffer = Buffer.from(data.samples.buffer);
 

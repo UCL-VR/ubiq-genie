@@ -1,8 +1,9 @@
 {
+  "$schema": "../../config.schema.json",
   "name": "Transcription",
-  "roomGuid": "6765c52b-3ad6-4fb0-9030-2c9a05dc4731",
+  "roomGuid": "a55fa6d3-08ee-4bcc-a5de-2f7b0311bd44",
   "roomserver": {
-    "joinExisting": true,
+    "joinExisting": false,
     "uri": "localhost",
     "tcp": {
       "port": 8009

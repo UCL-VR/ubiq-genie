@@ -15,3 +15,16 @@ config/local.json
 
 # IntelliJ IDEA #
 .idea/
+
+# Virtual environment folders
+venv/
+.venv/
+
+# Images and other media files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.mp4

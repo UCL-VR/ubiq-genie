@@ -19,20 +19,35 @@ These instructions will get you a copy of the project up and running to run the 
 
 2. Open a terminal in the `Node` folder and run `npm install` to install the dependencies.
 
-3. Install the Python dependencies by navigating to the `Node/services` folder and running `pip install -r requirements.txt`. If you are using a virtual environment, activate it before running the command. Please ensure that you have the correct PyTorch and CUDA versions installed (see the [PyTorch website](https://pytorch.org/get-started/locally/) for more information).
+3. Install the Python dependencies for the services you plan to use. Each service provider has its own `requirements.txt` file located in its provider folder (e.g., `Node/services/speech_to_text/providers/azure/requirements.txt`). Install them with `pip install -r <path_to_requirements.txt>`. If you are using a virtual environment, activate it before running the command. Missing dependencies will be flagged as warnings when a service starts. Please ensure that you have the correct PyTorch and CUDA versions installed (see the [PyTorch website](https://pytorch.org/get-started/locally/) for more information).
 
 ### Client (Unity)
 
-1. Install [Unity](https://unity3d.com/get-unity/download) **6.0 LTS** (version currently used is *Unity 6000.0.63f1*).
+Install [Unity](https://unity3d.com/get-unity/download) **6.0 LTS** (version currently used is *Unity 6000.0.67f1*). There are two ways to set up the Unity client:
 
-2. Clone this repository somewhere on your local machine.
+#### Option A: Use the Included Unity Project
 
-3. Add the `Unity` folder to Unity Hub and open the project in Unity.
+This is the quickest way to explore the samples.
 
-4. Navigate to Package Manager, click the Ubiq package (com.ucl.ubiq), navigate to the "Samples" tab, and import the "Demo (XRI)" sample. This will add the Unity XR Interaction Toolkit package to the project, as well as some scripts used by the Ubiq-Genie sample applications.
+1. Clone or download this repository if you haven't already, and add the `Unity` folder to Unity Hub. The Ubiq-Genie package (`com.ucl.ubiq-genie`) is included as an embedded package and will be loaded automatically.
+2. Wait for Unity to finish importing. On first open, Ubiq-Genie will automatically install its dependencies and import Ubiq's **Demo (XRI)** sample, which adds the XR Interaction Toolkit. This may trigger several editor restarts.
+3. In the Project window, navigate to `Assets/Ubiq-Genie/Apps/` and open any sample scene.
+
+#### Option B: Add Ubiq-Genie to Your Own Project
+
+Use this if you want to integrate Ubiq-Genie into an existing Unity project.
+
+1. In Unity, go to **Window → Package Manager → + → Add package from git URL** and enter:
+
+    ```
+    https://github.com/UCL-VR/ubiq-genie.git#upm
+    ```
+
+2. Wait for Unity to finish importing. Ubiq-Genie will automatically install its dependencies. This may trigger several editor restarts.
+3. Import any Ubiq-Genie sample from **Window → Package Manager → Ubiq-Genie → Samples** and open its scene.
 
 > [!NOTE]
-> Read the README file in the corresponding folder in the `Node/apps` folder for further setup instructions. For a list of available samples, see the [Samples](#samples) section below.
+> Regardless of which option you choose, you need a running Ubiq-Genie server — see the [Server setup](#server-nodejs) above. Read the README in the corresponding `Node/apps` folder for sample-specific instructions. For a list of available samples, see the [Samples](#samples) section below.
 
 ## Documentation
 
@@ -45,6 +60,8 @@ The `Node/apps` folder contains a number of samples that demonstrate how to use 
 - [**Texture Generation**](Node/apps/texture_generation/README.md): generates a texture based on voice-based input and an optional ray to select target objects
 - [**Multi-user Conversational Agent**](Node/apps/conversational_agent/README.md): a conversational agent that can be interacted with by multiple users
 - [**Transcription**](Node/apps/transcription/README.md): transcribes and audio of each user in the room in separate files
+
+Apps may optionally include version subfolders under `Node/apps/<app-name>/`, where each version has its own `app.ts` and `config.json`. Start with `npm start <app-name>` to choose interactively, or `npm start <app-name> <version>` to launch a specific version.
 
 For a demo video of the samples, please refer to the [Ubiq-Genie demo video](https://youtu.be/cGz0z9BIgQk).
 

@@ -1,0 +1,33 @@
+{
+    "name": "Ubiq.Genie.XRI",
+    "rootNamespace": "Ubiq.Genie.XRI",
+    "references": [
+        "Ubiq.Genie",
+        "Ubiq",
+        "Unity.XR.Interaction.Toolkit",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UBIQ_GENIE_HAS_UBIQ",
+        "UBIQ_GENIE_XRI"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.ucl.ubiq",
+            "expression": "",
+            "define": "UBIQ_GENIE_HAS_UBIQ"
+        },
+        {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "",
+            "define": "UBIQ_GENIE_XRI"
+        }
+    ],
+    "noEngineReferences": false
+}

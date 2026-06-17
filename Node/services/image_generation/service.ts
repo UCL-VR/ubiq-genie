@@ -1,36 +1,29 @@
 import { ServiceController } from '../../components/service';
-import { NetworkScene } from 'ubiq-server/ubiq';
+import type { ServiceProvider, ProviderRegistry } from '../../components/service';
+import { NetworkScene } from '@ucl-vr/ubiq';
+import { createStableDiffusionProvider } from './providers/stable_diffusion/provider';
+
+const SERVICE_CONFIG_KEY = 'imageGeneration';
+
+const providers: ProviderRegistry = {
+    'stable-diffusion': (config) => createStableDiffusionProvider({
+        outputFolder: config.options?.outputFolder as string,
+        promptPostfix: config.options?.promptPostfix as string,
+    }),
+};
 
 class ImageGenerationService extends ServiceController {
-    constructor(scene: NetworkScene) {
-        super(scene, 'ImageGenerationService');
-        this.registerRoomClientEvents();
-    }
-
-    // Register events to start the child process when the first peer joins the room, and to kill the child process when the last peer leaves the room.
-    registerRoomClientEvents() {
-        if (this.roomClient == undefined) {
-            throw new Error('RoomClient must be added to the scene before ImageGenerationService');
-        }
-
-        this.roomClient.addListener('OnPeerAdded', (peer: any) => {
-            if (!('default' in this.childProcesses)) {
-                this.registerChildProcess('default', 'python', [
-                    '-u',
-                    '../../services/image_generation/text_2_image.py',
-                    '--output_folder',
-                    '../../apps/texture_generation/data',
-                    '--prompt_postfix',
-                    ', 4k',
-                ]);
-            }
+    constructor(
+        scene: NetworkScene,
+        provider?: ServiceProvider,
+        options?: { outputFolder?: string; promptPostfix?: string }
+    ) {
+        const defaultProvider = createStableDiffusionProvider({
+            outputFolder: options?.outputFolder ?? '../../apps/texture_generation/data',
+            promptPostfix: options?.promptPostfix ?? ', 4k',
         });
-
-        this.roomClient.addListener('OnPeerRemoved', (peer: any) => {
-            if (this.roomClient.peers.size == 0) {
-                this.killChildProcess('default');
-            }
-        });
+        const resolvedProvider = provider ?? ServiceController.resolveProvider(SERVICE_CONFIG_KEY, providers, defaultProvider);
+        super(scene, 'ImageGenerationService', resolvedProvider, SERVICE_CONFIG_KEY);
     }
 }
 

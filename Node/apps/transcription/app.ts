@@ -1,10 +1,11 @@
-// import { UbiqTcpConnection } from 'ubiq-server/ubiq';
+// import { UbiqTcpConnection } from '@ucl-vr/ubiq';
 import { ApplicationController } from '../../components/application';
-import { NetworkId } from 'ubiq-server/ubiq';
+import { NetworkId } from '@ucl-vr/ubiq';
 import { SpeechToTextService } from '../../services/speech_to_text/service';
+import { NemotronStreamingSTTProvider } from '../../services/speech_to_text/providers/nemotron_streaming/provider';
 import fs from 'fs';
 import path from 'path';
-import { MediaReceiver } from '../../components/media_receiver';
+import { VoipReceiver } from '../../components/voip_receiver';
 import { RTCAudioData } from '@roamhq/wrtc/types/nonstandard';
 import { AudioRecorder } from '../../services/audio_recorder/service';
 import { fileURLToPath } from 'url';
@@ -12,7 +13,7 @@ import { fileURLToPath } from 'url';
 class Transcription extends ApplicationController {
     components: {
         audioRecorder?: AudioRecorder;
-        mediaReceiver?: MediaReceiver;
+        voipReceiver?: VoipReceiver;
         speech2text?: SpeechToTextService;
         writer?: fs.WriteStream;
     } = {};
@@ -35,11 +36,11 @@ class Transcription extends ApplicationController {
     }
 
     registerComponents(): void {
-        // An MediaReceiver to receive audio data from peers
-        this.components.mediaReceiver = new MediaReceiver(this.scene);
+        // A VoipReceiver to receive audio data from peers via WebRTC VOIP
+        this.components.voipReceiver = new VoipReceiver(this.scene);
 
         // A SpeechToTextService to transcribe audio coming from peers
-        this.components.speech2text = new SpeechToTextService(this.scene);
+        this.components.speech2text = new SpeechToTextService(this.scene, NemotronStreamingSTTProvider);
 
         // An AudioRecorder to record audio data from peers
         this.components.audioRecorder = new AudioRecorder(this.scene);
@@ -61,14 +62,14 @@ class Transcription extends ApplicationController {
 
     definePipeline(): void {
         // Step 1: When we receive audio data from a peer we send it to the transcription service and recording service
-        this.components.mediaReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
+        this.components.voipReceiver?.on('audio', (uuid: string, data: RTCAudioData) => {
             // Convert the Int16Array to a Buffer
             const sampleBuffer = Buffer.from(data.samples.buffer);
 
             // Send the audio data to the transcription service and the audio recording service
             if (this.roomClient.peers.get(uuid) !== undefined) {
                 this.components.speech2text?.sendToChildProcess(uuid, sampleBuffer);
-                this.components.audioRecorder?.sendToChildProcess(uuid, sampleBuffer);
+                this.components.audioRecorder?.write(uuid, sampleBuffer);
             }
         });
 

@@ -1,20 +1,18 @@
 import { ServiceController } from '../../components/service';
-import { NetworkScene } from 'ubiq-server/ubiq';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import type { ServiceProvider, ProviderRegistry } from '../../components/service';
+import { NetworkScene } from '@ucl-vr/ubiq';
+import { IntervalPrinterProvider } from './providers/interval_printer/provider';
+
+const SERVICE_CONFIG_KEY = 'base';
+
+const providers: ProviderRegistry = {
+    'interval-printer': () => IntervalPrinterProvider,
+};
 
 class BaseService extends ServiceController {
-    constructor(scene: NetworkScene, name = 'BaseService') {
-        super(scene, name);
-
-        // Get __dirname in ES module
-        const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-        // This sample Python file sends a message every 5 seconds.
-        this.registerChildProcess('periodic-text-sender', 'python', [
-            '-u',
-            path.join(__dirname, './interval_text_printer.py'),
-        ]);
+    constructor(scene: NetworkScene, provider?: ServiceProvider) {
+        const resolvedProvider = provider ?? ServiceController.resolveProvider(SERVICE_CONFIG_KEY, providers, IntervalPrinterProvider);
+        super(scene, 'BaseService', resolvedProvider, SERVICE_CONFIG_KEY);
     }
 }
 

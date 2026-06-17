@@ -1,0 +1,46 @@
+{
+  "$schema": "../../../config.schema.json",
+  "name": "Virtual Assistant (PersonaPlex)",
+  "roomGuid": "452dbb15-1985-45b1-9b26-507026655332",
+  "roomserver": {
+    "joinExisting": false,
+    "uri": "localhost",
+    "tcp": {
+      "port": 8009
+    },
+    "wss": {
+      "port": 8010,
+      "cert": "./certs/cert.pem",
+      "key": "./certs/key.pem"
+    }
+  },
+  "status": {
+    "port": 8011,
+    "cert": "./certs/cert.pem",
+    "key": "./certs/key.pem",
+    "apikeys": []
+  },
+  "iceservers": [
+    {
+      "uri": "stun:stun.l.google.com:19302"
+    }
+  ],
+  "services": {
+    "audioToAudio": {
+      "provider": "personaplex",
+      "python": {
+        "command": ""
+      },
+      "externalRepo": {
+        "path": "",
+        "url": "https://github.com/nsalminen/personaplex"
+      },
+      "options": {
+        "voicePrompt": "NATF1.pt",
+        "textPrompt": "Your name is Janet. You are a friendly person, eager to help and chat with others. Your responses are short.",
+        "device": "cuda"
+      }
+    }
+  },
+  "configurationComplete": false
+}

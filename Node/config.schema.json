@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ubiq-Genie Application Configuration",
+  "description": "Configuration schema for Ubiq-Genie Node applications (config.json).",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the application."
+    },
+    "roomGuid": {
+      "type": "string",
+      "description": "GUID of the Ubiq room to join or create."
+    },
+    "roomserver": {
+      "type": "object",
+      "description": "Ubiq room server connection settings.",
+      "properties": {
+        "joinExisting": {
+          "type": "boolean",
+          "description": "If true, join an existing server. If false, create a new one."
+        },
+        "uri": {
+          "type": "string",
+          "description": "Server hostname or IP address.",
+          "default": "localhost"
+        },
+        "tcp": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer", "default": 8009 }
+          }
+        },
+        "wss": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer", "default": 8010 },
+            "cert": { "type": "string" },
+            "key": { "type": "string" }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "description": "Status/health server settings.",
+      "properties": {
+        "port": { "type": "integer", "default": 8011 },
+        "cert": { "type": "string" },
+        "key": { "type": "string" },
+        "apikeys": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "iceservers": {
+      "type": "array",
+      "description": "ICE/STUN/TURN servers for WebRTC.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "uri": { "type": "string" }
+        }
+      }
+    },
+    "preprompt": {
+      "type": "string",
+      "description": "System prompt prepended to text generation input."
+    },
+    "prompt_suffix": {
+      "type": "string",
+      "description": "Suffix appended to text generation prompts."
+    },
+    "prompt": {
+      "type": "string",
+      "description": "Default prompt for visual question answering."
+    },
+    "useAudioToAudio": {
+      "type": "boolean",
+      "description": "If true, use audio-to-audio pipeline instead of STT → text gen → TTS.",
+      "default": false
+    },
+    "tts": {
+      "type": "boolean",
+      "description": "If true, enable text-to-speech output.",
+      "default": false
+    },
+    "services": {
+      "type": "object",
+      "description": "Per-service configuration for provider selection, Python environments, external repos, and model settings.",
+      "properties": {
+        "textGeneration": { "$ref": "#/definitions/serviceConfig" },
+        "speechToText": { "$ref": "#/definitions/serviceConfig" },
+        "textToSpeech": { "$ref": "#/definitions/serviceConfig" },
+        "imageGeneration": { "$ref": "#/definitions/serviceConfig" },
+        "audioToAudio": { "$ref": "#/definitions/serviceConfig" },
+        "visualQuestionAnswering": { "$ref": "#/definitions/serviceConfig" },
+        "base": { "$ref": "#/definitions/serviceConfig" }
+      },
+      "additionalProperties": { "$ref": "#/definitions/serviceConfig" }
+    },
+    "configurationComplete": {
+      "type": "boolean",
+      "description": "Set to true after running the CLI configuration wizard."
+    }
+  },
+  "definitions": {
+    "serviceConfig": {
+      "type": "object",
+      "description": "Configuration for a single service.",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "Name of the provider to use (e.g., 'openai', 'llama-cpp', 'azure', 'kokoro', 'fastvlm', 'personaplex')."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model name, HuggingFace ID, or absolute path to model weights."
+        },
+        "python": {
+          "type": "object",
+          "description": "Python environment for this service.",
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Python command to use. Can be an absolute path to a venv executable (e.g., '/home/user/.venv/bin/python'), a conda-run invocation (e.g., 'conda run -n myenv python'), or a bare system command (e.g., 'python3')."
+            }
+          }
+        },
+        "externalRepo": {
+          "type": "object",
+          "description": "External repository dependency for this service.",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Absolute path to the cloned repository on disk."
+            },
+            "url": {
+              "type": "string",
+              "description": "Git clone URL of the repository."
+            },
+            "commit": {
+              "type": "string",
+              "description": "Known-good commit hash that this app was tested against."
+            }
+          }
+        },
+        "options": {
+          "type": "object",
+          "description": "Provider-specific options passed through to the provider factory.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

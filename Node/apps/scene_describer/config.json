@@ -1,0 +1,47 @@
+{
+  "$schema": "../../config.schema.json",
+  "name": "Scene Describer",
+  "roomGuid": "c69a7f14-5cb0-4356-89e2-8c1e0e15be2f",
+  "roomserver": {
+    "joinExisting": false,
+    "uri": "localhost",
+    "tcp": {
+      "port": 8009
+    },
+    "wss": {
+      "port": 8010,
+      "cert": "./certs/cert.pem",
+      "key": "./certs/key.pem"
+    }
+  },
+  "status": {
+    "port": 8011,
+    "cert": "./certs/cert.pem",
+    "key": "./certs/key.pem",
+    "apikeys": []
+  },
+  "iceservers": [
+    {
+      "uri": "stun:stun.l.google.com:19302"
+    }
+  ],
+  "prompt": "<image>\nProvide a caption of this image. Be very concise and use at most one sentence. Do not mention it is a video game.\n",
+  "tts": true,
+  "services": {
+    "visualQuestionAnswering": {
+      "provider": "fastvlm",
+      "model": "llava-fastvithd_1.5b_stage3",
+      "python": {
+        "command": ""
+      },
+      "externalRepo": {
+        "path": "",
+        "url": "https://github.com/apple/ml-fastvlm"
+      }
+    },
+    "textToSpeech": {
+      "provider": "kokoro"
+    }
+  },
+  "configurationComplete": false
+}

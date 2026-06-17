@@ -1,0 +1,28 @@
+{
+  "name": "VideoRecorder",
+  "roomGuid": "f288444f-cc1a-485b-b6b0-d007bc465873",
+  "roomserver": {
+    "joinExisting": false,
+    "uri": "localhost",
+    "tcp": {
+      "port": 8009
+    },
+    "wss": {
+      "port": 8010,
+      "cert": "./certs/cert.pem",
+      "key": "./certs/key.pem"
+    }
+  },
+  "status": {
+    "port": 8011,
+    "cert": "./certs/cert.pem",
+    "key": "./certs/key.pem",
+    "apikeys": []
+  },
+  "iceservers": [
+    {
+      "uri": "stun:stun.l.google.com:19302"
+    }
+  ],
+  "configurationComplete": false
+}

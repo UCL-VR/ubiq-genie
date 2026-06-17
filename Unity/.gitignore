@@ -71,5 +71,13 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]amples
 /[Aa]ssets/[Ss]amples.meta
 
+# Build files
+/.utmp/
+/Unity_BurstDebugInformation_DoNotShip
+
 # macOS
 .DS_Store
+
+# 3rd party assets/plugins from the Asset Store or elsewhere
+/[Aa]ssets/Third[Pp]arty/
+/[Aa]ssets/Third[Pp]arty.meta

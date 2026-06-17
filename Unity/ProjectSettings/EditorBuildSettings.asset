@@ -4,6 +4,11 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Ubiq-Genie/Apps/ConversationalAgent/ConversationalAgent.unity
+    guid: fc8a1dcbce81745e4a89099ef69bbd81
   m_configObjects:
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: c082a6e06a04344d899eb5102c1f8fd3, type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 93791d8909c6542e29e6a0dd3059a2b7, type: 2}
+  m_UseUCBPForAssetBundles: 0

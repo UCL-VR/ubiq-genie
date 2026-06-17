@@ -1,36 +1,20 @@
-import fs from 'fs';
 import { ServiceController } from '../../components/service';
-import { NetworkScene } from 'ubiq-server/ubiq';
-import nconf from 'nconf';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import type { ServiceProvider, ProviderRegistry } from '../../components/service';
+import { NetworkScene } from '@ucl-vr/ubiq';
+import { AzureSTTProvider } from './providers/azure/provider';
+import { NemotronStreamingSTTProvider } from './providers/nemotron_streaming/provider';
+
+const SERVICE_CONFIG_KEY = 'speechToText';
+
+const providers: ProviderRegistry = {
+    'azure': (_config) => AzureSTTProvider,
+    'nemotron-streaming': (_config) => NemotronStreamingSTTProvider,
+};
 
 class SpeechToTextService extends ServiceController {
-    constructor(scene: NetworkScene, name = 'SpeechToTextService') {
-        super(scene, name);
-
-        this.registerRoomClientEvents();
-    }
-
-    // Register events to create a transcription process for each peer. These processes are killed when the peer leaves the room.
-    registerRoomClientEvents(): void {
-        if (this.roomClient === undefined) {
-            throw new Error('RoomClient must be added to the scene before AudioCollector');
-        }
-
-        this.roomClient.addListener('OnPeerAdded', (peer: { uuid: string }) => {
-            this.log('Starting speech-to-text process for peer ' + peer.uuid);
-
-            this.registerChildProcess(peer.uuid, 'python', [
-                '-u',
-                path.join(path.dirname(fileURLToPath(import.meta.url)), 'transcribe_azure.py'),
-            ]);
-        });
-
-        this.roomClient.addListener('OnPeerRemoved', (peer: { uuid: string }) => {
-            this.log('Ending speech-to-text process for peer ' + peer.uuid);
-            this.killChildProcess(peer.uuid);
-        });
+    constructor(scene: NetworkScene, provider?: ServiceProvider) {
+        const resolvedProvider = provider ?? ServiceController.resolveProvider(SERVICE_CONFIG_KEY, providers, AzureSTTProvider);
+        super(scene, 'SpeechToTextService', resolvedProvider, SERVICE_CONFIG_KEY);
     }
 }
 

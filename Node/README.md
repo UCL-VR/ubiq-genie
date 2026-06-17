@@ -4,22 +4,121 @@ Ubiq-Genie is a framework that enables you to build server-assisted collaborativ
 
 ## System Architecture
 
-- **Unity Scenes** serve as the interface for VR users and contain application-specific Unity components that communicate with a server-side `ApplicationController` through a TCP connection, using Ubiq's `Networking` components. These client-side components are written in C# and ensure that outgoing and incoming data are processed and routed correctly. The Unity scene of each application can be found in the `Unity/Assets/Apps` folder.
+- **Unity Scenes** serve as the interface for VR users and contain application-specific Unity components that communicate with a server-side `ApplicationController` through a TCP connection, using Ubiq's `Networking` components. These client-side components are written in C# and ensure that outgoing and incoming data are processed and routed correctly. The Unity scenes are distributed as importable samples in the `com.ucl.ubiq-genie` package (see the [package README](../Unity/Assets/Ubiq-Genie/README.md)).
 
-- **Applications** should have an associated Unity scene and `ApplicationController`. The `ApplicationController` is responsible for initializing and managing the services that are required by the application. It also handles the communication between the services and the Unity scene. The `ApplicationController` is written in TypeScript (ESM) and runs on the server. The `ApplicationController` of each of the sample applications can be found in the `app.ts` file in the corresponding folder in the `Node/apps` folder.
+- **Applications** should have an associated Unity scene and `ApplicationController`. The `ApplicationController` is responsible for initializing and managing the services that are required by the application. It also handles the communication between the services and the Unity scene. The `ApplicationController` is written in TypeScript (ESM) and runs on the server. The `ApplicationController` of each sample can be found in `app.ts` inside its app folder (or inside a version subfolder when an app has multiple versions) in `Node/apps`.
 
-- **Services** are modular and can be reused in different applications. Each service is responsible for a specific task and is managed by a `ServiceController`. Services typically use child processes to run external applications. For instance, the `ImageGenerationService` spawns a Python child process to generate images with Stable Diffusion 2.0. The `ServiceController` is written in TypeScript (ESM) and runs on the server. The `ServiceController` of each of the sample services can be found in the `service.ts` file in the corresponding folder in the `Node/services` folder.
+- **Services** are modular and can be reused in different applications. Each service is responsible for a specific task and is managed by a `ServiceController`. Services use **providers** — lightweight configuration objects that define what backend to run and how to manage its lifecycle. For instance, the `ImageGenerationService` uses a Stable Diffusion provider that spawns a Python child process to generate images. Providers can be selected via config.json without changing any code — see [Config-Driven Provider Selection](#config-driven-provider-selection). The `ServiceController` is written in TypeScript (ESM) and runs on the server. The `ServiceController` of each of the sample services can be found in the `service.ts` file in the corresponding folder in the `Node/services` folder.
+
+## Config-Driven Provider Selection
+
+Each service registers a **provider registry** — a mapping from provider names to factory functions. At construction time, the service reads `services.<serviceName>.provider` from config.json and resolves the appropriate backend automatically. This means you can switch providers (e.g., from OpenAI to a local llama.cpp model) by changing a single line in config.json:
+
+```json
+{
+  "services": {
+    "textGeneration": {
+      "provider": "llama-cpp",
+      "model": "hf:Qwen/Qwen3-4B-GGUF/Qwen3-4B-Q8_0.gguf"
+    }
+  }
+}
+```
+
+### Per-Service Configuration
+
+Each service section supports these fields:
+
+| Field | Description |
+|-------|-------------|
+| `provider` | Provider name to use (e.g., `openai`, `llama-cpp`, `azure`, `kokoro`, `fastvlm`, `personaplex`) |
+| `model` | Model name, HuggingFace ID, or absolute path to model weights |
+| `python.command` | Absolute path to a Python executable for this service's venv |
+| `externalRepo.path` | Absolute path to an external repository this provider depends on |
+| `externalRepo.url` | Git clone URL (for documentation/error messages) |
+| `externalRepo.commit` | Known-good commit hash — a warning is logged if the repo is on a different commit |
+| `options` | Provider-specific options passed through to the factory function |
+
+A JSON Schema is provided at [`config.schema.json`](config.schema.json) for IDE autocomplete. Add `"$schema": "../../config.schema.json"` to your config.json to enable it.
+
+### Service Lifecycle States
+
+Child processes can emit standardized markers to stdout to signal their state:
+
+| Marker | Meaning |
+|--------|---------|
+| `>READY` | Backend has finished loading and is ready to accept input |
+| `>BUSY` | Backend is currently processing a request |
+| `>IDLE` | Backend has finished processing and is ready for the next request |
+
+These markers are automatically stripped from the data stream by `ServiceController`. Use `service.waitForReady()` to wait for a backend to finish loading, or listen to `stateChange` events.
 
 ## Defining New Services
 
 To define a new service, follow these steps:
 
-1. Duplicate the `Node/services/base` folder and rename it to the name of your service (e.g., `my_service`). Also replace the class name `BaseService` in the `service.ts` file with the name of your service (e.g., `MyService`).
+1. Duplicate the `Node/services/base` folder and rename it to the name of your service (e.g., `my_service`). Replace the class name `BaseService` in the `service.ts` file with the name of your service (e.g., `MyService`).
 
-2. For any child processes that your service requires (e.g., Python scripts), copy the corresponding files into the folder you just created. For instance, if your service requires a Python script called `example_service.py`, copy this file into the folder you just created.
+2. Create a provider for your service. A provider is a `ServiceProvider` object that specifies the command to run, its arguments, and a process mode. Create a folder under `providers/` (e.g., `providers/my_provider/`) and add a `provider.ts` file that exports your provider configuration. Place any backend scripts (e.g., Python) and a `requirements.txt` in the same folder.
+
+    ```typescript
+    import type { ServiceProvider } from '../../../../components/service';
+    import path from 'path';
+    import { fileURLToPath } from 'url';
+
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+    export const MyProvider: ServiceProvider = {
+        name: 'my-provider',
+        command: 'python',
+        args: ['-u', path.join(__dirname, 'my_script.py')],
+        processMode: 'singleton',
+        requirements: path.join(__dirname, 'requirements.txt'),
+    };
+    ```
+
+3. Import this provider in your `service.ts` and pass it to the `ServiceController`:
+
+    ```typescript
+    import { ServiceController } from '../../components/service';
+    import { NetworkScene } from 'ubiq-server/ubiq';
+    import { MyProvider } from './providers/my_provider/provider';
+
+    class MyService extends ServiceController {
+        constructor(scene: NetworkScene) {
+            super(scene, 'MyService', MyProvider);
+        }
+    }
+    ```
+
+### Process Modes
+
+Each provider must specify a `processMode` that determines how child processes are managed:
+
+| Mode | Behaviour |
+| --- | --- |
+| `per-peer` | One child process per connected peer. Spawned on peer join, killed on peer leave. Use when each peer needs an isolated backend (e.g., speech-to-text). |
+| `singleton` | A single child process spawned immediately when the service is created. Use for shared stateful backends (e.g., text generation). |
+| `lazy-singleton` | A single child process spawned when the first peer joins and killed when all peers leave. Use for resource-heavy backends that should only run when needed (e.g., image generation). |
+
+### Provider Directory Structure
+
+Each provider is self-contained in its own folder:
+
+```text
+services/my_service/
+├── service.ts
+└── providers/
+    └── my_provider/
+        ├── provider.ts        # ServiceProvider configuration
+        ├── my_script.py       # Backend script
+        └── requirements.txt   # Python dependencies
+```
+
+When a provider specifies a `requirements` path, the `ServiceController` will automatically check whether the required Python packages are installed at startup and log a warning if any are missing.
 
 > [!NOTE]
-> The `BaseService` service provides a minimal example of spawning a Python process that periodically sends a message. For more advanced examples, see the existing services in the `Node/services` folder.
+> The `BaseService` provides a minimal example of a service with a provider. For more advanced examples, see the existing services in the `Node/services` folder. Not all services require a provider — for instance, the `AudioRecorder` records audio natively in TypeScript without spawning any child processes.
 
 You are now ready to use your new service in an application. For more information on how to define a new application, see the `How to Define a New Application` section below.
 
@@ -29,11 +128,19 @@ To define a new application, follow these steps:
 
 1. Duplicate the `Node/apps/base` folder and rename it to the name of your application (e.g., `my_application`). Also replace the class name `BaseApplication` in the `app.ts` file with the name of your application (e.g., `MyApplication`).
 
+You can start applications with:
+
+```bash
+npm start <app-name> [version] [configure]
+```
+
+If an app has multiple version subfolders, each version is a direct child folder containing its own `config.json` and `app.ts`. Running `npm start <app-name>` will prompt you to choose a version.
+
 > [!NOTE]
 > The `BaseApplication` application provides a minimal example of creating an application using the `BaseService` service. For more advanced examples, see the existing applications in the `Node/apps` folder. The `registerComponents` method defines the components of the application, which are stored in a dictionary called `components`. The `definePipeline` method defines the pipeline of the application. The `start` method starts the application by registering the components, defining the pipeline, and joining a room on the specified Ubiq server in the configuration file.
 
 2. Take a look at the `config.json` file in the folder you just created. This file contains the configuration of your application. This includes the name of the application, the GUID of the room that the application will join, the information required to join or start a Ubiq server, and the ICE servers that are used for WebRTC connections. Note that `joinExisting` should be set to `true` if you want to join an existing server, and `false` if you want to start a new server. For more information on Ubiq servers and messages, see the [Ubiq documentation](https://ucl-vr.github.io/ubiq/serverintroduction/).
 
-3. In Unity, duplicate the `Unity/Assets/Apps/Base` folder and rename it to the name of your application (e.g., `MyApplication`). This folder will contain the Unity scene of your application.
+3. In Unity, duplicate the **Base** sample folder as a starting point for your application. If you installed the package via git URL (UPM), first import the **Base** sample from **Window → Package Manager → Ubiq-Genie → Samples**.
 
 4. In the Unity scene hierarchy, navigate to `Ubiq-Genie/`, where we recommend you place any application-specific components that communicate with the server-side process of your Ubiq-Genie application. In the Base application, this is simply a `MessageReceiver` component that listens for messages from the server, which are sent by the Python process of the `BaseService` service that is part of the `BaseApplication` application.
