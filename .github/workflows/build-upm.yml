@@ -34,12 +34,3 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit --allow-empty -am "Build UPM package from ${GITHUB_SHA::8}"
           git push origin HEAD:upm --force
-
-      # Uncomment the following to tag UPM releases with the version from
-      # package.json. Useful once you start publishing stable versions.
-      #
-      # - name: Tag version
-      #   run: |
-      #     VERSION=$(node -p "require('./package.json').version")
-      #     git tag "v${VERSION}" || true
-      #     git push origin "v${VERSION}" || true

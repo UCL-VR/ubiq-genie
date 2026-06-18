@@ -1,5 +1,5 @@
 {
-  "name": "ubiq-genie",
+  "name": "@ucl-vr/ubiq-genie",
   "version": "1.0.0",
   "description": "A framework for building server-assisted collaborative mixed reality applications with Ubiq",
   "type": "module",
